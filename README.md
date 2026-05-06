@@ -29,7 +29,7 @@ O projeto foi estruturado em camadas para facilitar a manutenção e garantir o 
 **Persistência de Dados:** **SQLite** para armazenar as preferências do usuário, mapeamento de gestos e sensibilidade.
 
 ## Privacidade e Desempenho
-* ** Todo o processamento de imagem é realizado estritamente de forma local no dispositivo.Nenhum frame de vídeo é armazenado ou enviado à nuvem, em conformidade com a LGPD.
+* **Todo o processamento de imagem é realizado estritamente de forma local no dispositivo.Nenhum frame de vídeo é armazenado ou enviado à nuvem, em conformidade com a LGPD.
 * **Baixa Latência:** O sistema é otimizado para que o tempo de resposta entre o gesto e a ação não ultrapasse 500ms.
 
 ##  Pré-requisitos (Hardware Mínimo)
