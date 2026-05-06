@@ -40,7 +40,7 @@ O projeto foi estruturado em camadas para facilitar a manutenção e garantir o 
 
 ##  Equipe de Desenvolvimento
 Projeto desenvolvido como parte acadêmica na **Universidade Católica de Brasília (UCB)**.
-* Nicole Cardoso Dia
+* Nicole Cardoso Dias
 * Pedro Cauã 
 * Samuel Gomes 
 * Rodrigo Barbosa
