@@ -1,3 +1,6 @@
+**Universidade Católica de Brasília**
+**Disciplina:** Análise e Projeto de Software
+
 # Documentação de Interface e Usabilidade 
 
 **Projeto:** Sistema de Acessibilidade Cefálica (SAC) para Spotify
