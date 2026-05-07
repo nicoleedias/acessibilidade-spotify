@@ -1,3 +1,6 @@
+**Universidade Católica de Brasília**
+**Disciplina:** Análise e Projeto de Software
+
 # Documento de Arquitetura de Software
 
 ## Informações do Projeto
