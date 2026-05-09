@@ -236,6 +236,7 @@ private fun HomeActionCard(
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun HomeScreenPreview() {

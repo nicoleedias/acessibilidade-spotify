@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -93,12 +94,8 @@ fun LoginScreen(onConnectClick: () -> Unit = {}) {
                             brush =
                                 Brush.linearGradient(
                                     colors = listOf(SurfaceDark, BackgroundDark),
-                                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                                    end =
-                                        androidx.compose.ui.geometry.Offset(
-                                            Float.POSITIVE_INFINITY,
-                                            Float.POSITIVE_INFINITY,
-                                        ),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
                                 ),
                         )
                         .border(1.dp, BorderDark, RoundedCornerShape(28.dp)),
@@ -182,6 +179,7 @@ fun LoginScreen(onConnectClick: () -> Unit = {}) {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun LoginScreenPreview() {

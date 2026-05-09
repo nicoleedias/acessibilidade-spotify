@@ -55,16 +55,6 @@ import com.sac.acessibilidade.ui.theme.SurfaceDark
 import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
 import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
-import com.sac.acessibilidade.ui.theme.TextSecondary
-
-data class PlayerAtivoUiState(
-    val trackTitle: String = "Nome da Música",
-    val trackArtist: String = "Nome do Artista",
-    val isPlaying: Boolean = true,
-    val lastGestureName: String = "",
-    val lastGestureAction: String = "",
-    val hasDetectedGesture: Boolean = false,
-)
 
 @Composable
 fun PlayerAtivoScreen(
@@ -301,6 +291,7 @@ private fun NowPlayingCard(
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun PlayerAtivoScreenPreview() {
@@ -309,6 +300,7 @@ private fun PlayerAtivoScreenPreview() {
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun PlayerAtivoScreenWithGesturePreview() {

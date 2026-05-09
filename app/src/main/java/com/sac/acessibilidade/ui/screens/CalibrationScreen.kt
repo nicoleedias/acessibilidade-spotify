@@ -259,6 +259,7 @@ private fun DirectionArrow(
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun CalibrationScreenPreview() {

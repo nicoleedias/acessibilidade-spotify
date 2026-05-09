@@ -2,6 +2,7 @@ package com.sac.acessibilidade.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,9 +40,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,12 +57,6 @@ import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
 import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
 import com.sac.acessibilidade.ui.theme.TextSecondary
-
-data class GestureMappingUi(
-    val gestureName: String,
-    val selectedAction: String,
-    val icon: ImageVector,
-)
 
 private val defaultGestureMappings =
     listOf(
@@ -129,7 +125,7 @@ fun GestureConfigScreen(
             items(gestureMappings) { mapping ->
                 GestureMappingCard(
                     mapping = mapping,
-                    // onActionClick será conectado ao ViewModel quando UC03 for implementado
+                    // onActionClick será conectado ao GestureConfigViewModel no UC03
                     onActionClick = {},
                 )
             }
@@ -252,7 +248,7 @@ private fun GestureMappingCard(
             )
         }
 
-        // Dropdown com ação selecionada (onActionClick conectado no UC03)
+        // Dropdown: toque para trocar a ação mapeada a este gesto (UC03)
         Row(
             modifier =
                 Modifier
@@ -260,6 +256,12 @@ private fun GestureMappingCard(
                     .clip(RoundedCornerShape(14.dp))
                     .background(BackgroundDark)
                     .border(1.dp, SurfaceVariantDark, RoundedCornerShape(14.dp))
+                    .clickable(onClick = onActionClick)
+                    .semantics {
+                        contentDescription =
+                            "Selecionar ação para ${mapping.gestureName}: ${mapping.selectedAction}"
+                        role = Role.Button
+                    }
                     .padding(horizontal = 20.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -271,7 +273,7 @@ private fun GestureMappingCard(
             )
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Selecionar ação para ${mapping.gestureName}",
+                contentDescription = null,
                 tint = TextMuted,
                 modifier = Modifier.size(18.dp),
             )
@@ -279,6 +281,7 @@ private fun GestureMappingCard(
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun GestureConfigScreenPreview() {

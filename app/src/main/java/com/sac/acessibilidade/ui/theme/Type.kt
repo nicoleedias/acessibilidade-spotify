@@ -6,7 +6,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-
 // Fonte Inter via Downloadable Fonts (res/font/inter_*.xml).
 // Pesos 400/500/700 mapeados para Normal/Medium/Bold.
 // TODO: Voltar a usar Inter via Downloadable Fonts depois que os certificados

@@ -11,14 +11,6 @@ import com.sac.acessibilidade.ui.screens.HomeScreen
 import com.sac.acessibilidade.ui.screens.LoginScreen
 import com.sac.acessibilidade.ui.screens.PlayerAtivoScreen
 
-sealed class Screen(val route: String) {
-    data object Login : Screen("login")
-    data object Home : Screen("home")
-    data object Calibration : Screen("calibration")
-    data object GestureConfig : Screen("gesture_config")
-    data object PlayerAtivo : Screen("player_ativo")
-}
-
 @Composable
 fun SacNavHost(
     navController: NavHostController,
