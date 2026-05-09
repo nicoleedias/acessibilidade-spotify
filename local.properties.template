@@ -1,0 +1,11 @@
+# local.properties — NÃO versionar este arquivo (já está no .gitignore)
+# Copie este template para local.properties e preencha os valores.
+
+# Caminho do Android SDK (preenchido automaticamente pelo Android Studio)
+# sdk.dir=/Users/SEU_USUARIO/Library/Android/sdk
+
+# Credenciais Spotify Web API (OAuth 2.0 com PKCE)
+# Obtenha em: https://developer.spotify.com/dashboard
+# Nunca exponha estas chaves em código ou VCS.
+SPOTIFY_CLIENT_ID=seu_client_id_aqui
+SPOTIFY_REDIRECT_URI=sac://callback

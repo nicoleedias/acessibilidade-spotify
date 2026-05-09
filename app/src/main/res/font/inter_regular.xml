@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Inter Regular (peso 400) via Google Fonts Downloadable Fonts.
+    Processado pelo GMS Font Provider — nenhum arquivo TTF no APK.
+    Referência: https://developer.android.com/guide/topics/ui/look-and-feel/downloadable-fonts
+-->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:fontProviderAuthority="com.google.android.gms.fonts"
+    app:fontProviderPackage="com.google.android.gms"
+    app:fontProviderQuery="name=Inter&amp;weight=400"
+    app:fontProviderCerts="@array/com_google_android_gms_fonts_certs">
+</font-family>

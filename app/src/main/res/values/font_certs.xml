@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Certificados do Google Fonts GMS Provider (produção e desenvolvimento).
+    Valores gerados automaticamente pelo Android Studio via
+    "More fonts..." > "Add font to project".
+    Para regenerar: Tools > Resource Manager > Font > "+" > Downloadable Font.
+    Ref: https://developer.android.com/guide/topics/ui/look-and-feel/downloadable-fonts#adding-certificates
+-->
+<resources>
+    <array name="com_google_android_gms_fonts_certs">
+        <item>@array/com_google_android_gms_fonts_certs_dev</item>
+        <item>@array/com_google_android_gms_fonts_certs_prod</item>
+    </array>
+
+    <!--
+        AÇÃO NECESSÁRIA: abrir este projeto no Android Studio e usar
+        o diálogo "Downloadable Fonts" para popular os valores abaixo
+        automaticamente. Deixar vazio apenas impede o download das
+        fontes em runtime; a compilação não é afetada.
+    -->
+    <string-array name="com_google_android_gms_fonts_certs_dev">
+        <!-- Android Studio popula este array com o hash do cert de desenvolvimento do GMS -->
+    </string-array>
+    <string-array name="com_google_android_gms_fonts_certs_prod">
+        <!-- Android Studio popula este array com o hash do cert de produção do GMS -->
+    </string-array>
+</resources>

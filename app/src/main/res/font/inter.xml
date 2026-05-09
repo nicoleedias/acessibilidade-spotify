@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Família Inter com pesos 400, 500 e 700, cada um baixado
+    individualmente via Google Fonts GMS Provider.
+    Referenciado em Type.kt como R.font.inter_regular / inter_medium / inter_bold.
+    Este arquivo serve como documentação da família; os recursos individuais
+    (inter_regular.xml, inter_medium.xml, inter_bold.xml) são os usados em código.
+-->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font
+        app:font="@font/inter_regular"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+    <font
+        app:font="@font/inter_medium"
+        app:fontStyle="normal"
+        app:fontWeight="500" />
+    <font
+        app:font="@font/inter_bold"
+        app:fontStyle="normal"
+        app:fontWeight="700" />
+</font-family>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tema XML mínimo para a Activity window.
+    O tema visual real é aplicado via Compose (SacTheme em Theme.kt).
+    NoActionBar: a ActionBar não é usada; navegação é feita via Compose NavHost.
+-->
+<resources>
+    <style name="Theme.SAC" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+    </style>
+</resources>

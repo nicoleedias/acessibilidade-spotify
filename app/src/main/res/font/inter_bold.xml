@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Inter Bold (peso 700) via Google Fonts Downloadable Fonts.
+    Usado em títulos de tela, botões primários e logo SAC.
+-->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:fontProviderAuthority="com.google.android.gms.fonts"
+    app:fontProviderPackage="com.google.android.gms"
+    app:fontProviderQuery="name=Inter&amp;weight=700"
+    app:fontProviderCerts="@array/com_google_android_gms_fonts_certs">
+</font-family>

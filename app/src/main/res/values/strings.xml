@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SAC</string>
+
+    <!-- Login -->
+    <string name="login_title">Bem-vindo</string>
+    <string name="login_subtitle">Acesse sua conta para começar. Utilizamos o padrão <b>OAuth 2.0</b> para uma autenticação 100% segura.</string>
+    <string name="login_button_connect">Conectar com Spotify</string>
+    <string name="login_disclaimer">Não salvamos sua senha. Você será redirecionado para o ambiente seguro do Spotify.</string>
+
+    <!-- Home -->
+    <string name="home_greeting">Olá, %1$s</string>
+    <string name="home_subtitle">Pronto para controlar sua música?</string>
+    <string name="home_status_connected">Spotify Conectado</string>
+    <string name="home_action_start_tracking">Iniciar Rastreamento</string>
+    <string name="home_action_start_tracking_desc">Controle facial ativado</string>
+    <string name="home_action_calibrate">Calibrar Movimentos</string>
+    <string name="home_action_calibrate_desc">Ajustar precisão da câmera</string>
+    <string name="home_action_configure_gestures">Configurar Gestos</string>
+    <string name="home_action_configure_gestures_desc">Mapear ações de música</string>
+
+    <!-- Calibração -->
+    <string name="calibration_title">Calibrar Rosto</string>
+    <string name="calibration_instruction">Olhe para a direção indicada</string>
+    <string name="calibration_confirm">Confirmar</string>
+
+    <!-- Configurar Gestos -->
+    <string name="gestures_title">Configurar Gestos</string>
+    <string name="gestures_subtitle">Mapeie seus movimentos faciais para controlar a reprodução no Spotify.</string>
+    <string name="gestures_save">Salvar Configurações</string>
+
+    <!-- Gestos -->
+    <string name="gesture_tilt_right">Inclinar para Direita</string>
+    <string name="gesture_tilt_left">Inclinar para Esquerda</string>
+    <string name="gesture_tilt_up">Inclinar para Cima</string>
+    <string name="gesture_tilt_down">Inclinar para Baixo</string>
+    <string name="gesture_turn_right">Virar para Direita</string>
+    <string name="gesture_turn_left">Virar para Esquerda</string>
+    <string name="gesture_nod">Acenar (Sim)</string>
+    <string name="gesture_blink_right">Piscar Olho Direito</string>
+    <string name="gesture_blink_left">Piscar Olho Esquerdo</string>
+
+    <!-- Ações Spotify -->
+    <string name="action_play_pause">Tocar / Pausar</string>
+    <string name="action_next_track">Próxima Faixa</string>
+    <string name="action_previous_track">Faixa Anterior</string>
+    <string name="action_volume_up">Aumentar Volume</string>
+    <string name="action_volume_down">Diminuir Volume</string>
+
+    <!-- Feedback TTS (confirmação em voz das ações) -->
+    <string name="tts_playing">Tocando</string>
+    <string name="tts_paused">Pausado</string>
+    <string name="tts_next_track">Próxima faixa</string>
+    <string name="tts_previous_track">Faixa anterior</string>
+    <string name="tts_volume_up">Volume aumentado</string>
+    <string name="tts_volume_down">Volume reduzido</string>
+
+    <!-- Player Ativo -->
+    <string name="player_ativo_header">Rastreamento Ativo</string>
+    <string name="player_ativo_camera_description">Feed da câmera frontal para rastreamento de gestos</string>
+    <string name="player_ativo_no_gesture">Aguardando gesto…</string>
+    <string name="player_ativo_album_art_description">Capa do álbum</string>
+    <string name="player_ativo_play_button_description">Retomar reprodução</string>
+    <string name="player_ativo_pause_button_description">Pausar reprodução</string>
+    <string name="player_ativo_stop_button">Parar Rastreamento</string>
+    <string name="player_ativo_stop_button_description">Parar o rastreamento de gestos e voltar ao início</string>
+    <string name="player_ativo_status_tracking">Rastreamento em andamento</string>
+
+    <!-- Erros -->
+    <string name="error_no_connection">Sem conexão. Verifique sua internet e tente novamente.</string>
+    <string name="error_poor_lighting">Iluminação insuficiente. Mova-se para um ambiente mais claro.</string>
+    <string name="error_face_not_found">Rosto não detectado. Centralize seu rosto na câmera.</string>
+    <string name="error_spotify_unavailable">Não foi possível conectar ao Spotify. Tente novamente.</string>
+</resources>

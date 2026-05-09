@@ -1,0 +1,73 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  active: true
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+  LongMethod:
+    active: true
+    threshold: 60
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 8
+  TooManyFunctions:
+    active: false # ViewModels/composable screens legitimamente têm muitas funções
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    active: true # GlobalScope proibido — usar viewModelScope ou lifecycleScope
+  RedundantSuspendModifier:
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: true
+    exceptionNames:
+      - Exception
+      - Throwable
+
+naming:
+    active: true
+    FunctionNaming:
+        active: true
+        excludes:
+            - "**/test/**"
+            - "**/androidTest/**"
+        functionPattern: "[a-z][a-zA-Z0-9]*"
+        ignoreAnnotated: ['Composable']
+
+potential-bugs:
+  active: true
+  DontDowncastCollectionTypes:
+    active: true
+  UnnecessaryNotNullOperator:
+    active: true # !! é proibido pelo CLAUDE.md
+  UnnecessarySafeCall:
+    active: true
+
+style:
+  active: true
+  ForbiddenComment:
+    active: false
+  MagicNumber:
+    active: false # Valores dp/sp em Compose são aceitáveis inline
+  ReturnCount:
+    active: true
+    max: 3
+  UnusedPrivateMember:
+    active: true
+

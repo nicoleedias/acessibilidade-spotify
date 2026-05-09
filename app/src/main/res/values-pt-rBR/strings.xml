@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Strings em pt-BR. Todos os identificadores são definidos em values/strings.xml (inglês).
+    Este arquivo sobrescreve apenas os valores para o locale pt-BR.
+    Por enquanto, o conteúdo é idêntico ao padrão (já escrito em português),
+    mantendo a estrutura para futuras traduções para outros idiomas.
+-->
+<resources>
+    <string name="app_name">SAC</string>
+</resources>

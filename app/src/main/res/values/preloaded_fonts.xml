@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Lista de fontes pré-carregadas na inicialização do app.
+    Declarado no AndroidManifest como meta-data "preloaded_fonts".
+    Garante que Inter esteja disponível antes da primeira tela renderizar,
+    evitando Flash Of Unstyled Text (FOUT).
+-->
+<resources>
+    <array name="preloaded_fonts" translatable="false">
+        <item>@font/inter_regular</item>
+        <item>@font/inter_medium</item>
+        <item>@font/inter_bold</item>
+    </array>
+</resources>

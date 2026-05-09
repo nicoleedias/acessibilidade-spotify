@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        CAMERA: visão computacional local via MediaPipe Face Mesh.
+        Frames processados exclusivamente no dispositivo — nenhum frame
+        é armazenado ou transmitido (conformidade LGPD, Art. 11).
+    -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!--
+        INTERNET: necessário para enviar comandos de reprodução à
+        Spotify Web API (/me/player/*) via REST. Frames nunca transitam
+        por esta conexão.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        ACCESS_NETWORK_STATE: valida conectividade antes de iniciar
+        chamadas REST, evitando erros desnecessários e melhorando o UX
+        quando o dispositivo está offline.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".SacApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SAC">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            AccessibilityService e Redirect URI do OAuth serão declarados
+            aqui quando implementados (UC01 e UC02).
+        -->
+    </application>
+</manifest>

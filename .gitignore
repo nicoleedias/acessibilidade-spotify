@@ -32,3 +32,14 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# LGPD — jamais commitar frames de câmera ou dados biométricos (CLAUDE.md)
+# Regra se aplica a qualquer subpasta do app/ exceto assets de design intencionais
+app/**/*.mp4
+app/**/*.jpg
+app/**/*.jpeg
+app/**/*.png
+app/**/*.webp
+# Exceção explícita: assets de design no source tree (descomente se necessário)
+# !app/src/main/res/**/*.png
+# !app/src/main/res/**/*.webp
