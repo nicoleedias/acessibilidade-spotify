@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.BorderDark
+import com.sac.acessibilidade.ui.theme.ErrorRed
 import com.sac.acessibilidade.ui.theme.SacTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.SurfaceDark
@@ -51,7 +53,11 @@ import com.sac.acessibilidade.ui.theme.TextPrimary
 import com.sac.acessibilidade.ui.theme.TextSecondary
 
 @Composable
-fun LoginScreen(onConnectClick: () -> Unit = {}) {
+fun LoginScreen(
+    uiState: LoginUiState = LoginUiState.Idle,
+    onConnectClick: () -> Unit = {},
+    onErrorDismiss: () -> Unit = {},
+) {
     Box(
         modifier =
             Modifier
@@ -135,11 +141,29 @@ fun LoginScreen(onConnectClick: () -> Unit = {}) {
                 textAlign = TextAlign.Center,
             )
 
+            if (uiState is LoginUiState.Error) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = uiState.message,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ErrorRed,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
+            val isLoading = uiState is LoginUiState.Loading
             val connectLabel = stringResource(R.string.login_button_connect)
+
             Button(
-                onClick = onConnectClick,
+                onClick = {
+                    if (!isLoading) {
+                        if (uiState is LoginUiState.Error) onErrorDismiss()
+                        onConnectClick()
+                    }
+                },
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -148,20 +172,29 @@ fun LoginScreen(onConnectClick: () -> Unit = {}) {
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                enabled = !isLoading,
             ) {
-                // TODO: substituir por ícone vetorial oficial do Spotify (assets/ic_spotify.svg)
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = TextPrimary,
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = connectLabel,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = TextPrimary,
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        color = TextPrimary,
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    // TODO: substituir por ícone vetorial oficial do Spotify (assets/ic_spotify.svg)
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = TextPrimary,
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = connectLabel,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = TextPrimary,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -185,5 +218,23 @@ fun LoginScreen(onConnectClick: () -> Unit = {}) {
 private fun LoginScreenPreview() {
     SacTheme {
         LoginScreen()
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview(showSystemUi = true, backgroundColor = 0xFF121212)
+@Composable
+private fun LoginScreenLoadingPreview() {
+    SacTheme {
+        LoginScreen(uiState = LoginUiState.Loading)
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview(showSystemUi = true, backgroundColor = 0xFF121212)
+@Composable
+private fun LoginScreenErrorPreview() {
+    SacTheme {
+        LoginScreen(uiState = LoginUiState.Error("Falha ao conectar com o Spotify. Tente novamente."))
     }
 }

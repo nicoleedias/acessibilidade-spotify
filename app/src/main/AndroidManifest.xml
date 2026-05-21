@@ -34,16 +34,31 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+                Recebe o redirect URI do OAuth 2.0 PKCE do Spotify.
+                O Spotify redireciona para sac://callback?code=xxx após autorização.
+                android:autoVerify="false": URI scheme customizado não precisa de
+                verificação de domínio (Digital Asset Links).
+            -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="callback"
+                    android:scheme="sac" />
+            </intent-filter>
         </activity>
 
         <!--
-            AccessibilityService e Redirect URI do OAuth serão declarados
-            aqui quando implementados (UC01 e UC02).
+            AccessibilityService será declarado aqui quando implementado (UC02).
         -->
     </application>
 </manifest>

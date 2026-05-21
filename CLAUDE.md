@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **SAC — Sistema de Acessibilidade Cefálica para Spotify** is an Android MVP that lets users with motor disabilities control Spotify playback using head gestures detected via the front-facing camera. All video processing is local (Edge Computing) — no frames are sent to any server.
 
-This repository is currently in the **documentation/planning phase**. The `Docs/` folder contains all design documents; Android source code has not yet been committed.
+The project is in the **early implementation phase**: five UI screens are implemented (no MVVM/ViewModel/Room yet — that refactor comes next). The `Docs/` folder contains all design documents.
 
 > **TCC context:** This is an undergraduate final project. Every non-trivial technical decision must be justifiable on a defense panel. Prefer well-documented, mainstream solutions over clever ones, and record decisions in `Docs/decisions/` (ADR format).
 
-## Planned Tech Stack
+## Tech Stack
 
 | Layer                | Technology                                                       |
 | -------------------- | ---------------------------------------------------------------- |
@@ -20,17 +20,43 @@ This repository is currently in the **documentation/planning phase**. The `Docs/
 | External Integration | Spotify Web API (REST, OAuth 2.0 with PKCE)                      |
 | Local Persistence    | SQLite (via Room)                                                |
 | Architecture Pattern | MVVM                                                             |
-| DI                   | Hilt (recommended)                                               |
+| DI                   | Hilt (`@HiltAndroidApp` on `SacApplication`, `@AndroidEntryPoint` on `MainActivity`) |
 | Async                | Kotlin Coroutines + Flow                                         |
 | Tests                | JUnit 4, MockK, Compose UI Test, Espresso                        |
+
+## Current Source Structure
+
+```
+app/src/main/java/com/sac/acessibilidade/
+├── MainActivity.kt           # Entry point — sets SacTheme + SacNavHost
+├── SacApplication.kt         # @HiltAndroidApp
+└── ui/
+    ├── navigation/
+    │   ├── Screen.kt         # sealed class Screen(val route: String) with 5 destinations
+    │   └── SacNavGraph.kt    # SacNavHost composable (NavHost wiring)
+    ├── screens/
+    │   ├── LoginScreen.kt
+    │   ├── HomeScreen.kt
+    │   ├── CalibrationScreen.kt
+    │   ├── GestureConfigScreen.kt
+    │   ├── GestureMappingUi.kt      # data class used by GestureConfigScreen
+    │   ├── PlayerAtivoScreen.kt
+    │   └── PlayerAtivoUiState.kt    # data class used by PlayerAtivoScreen
+    └── theme/
+        ├── Color.kt           # design tokens (SpotifyGreen, BackgroundDark, TextPrimary…)
+        ├── Theme.kt
+        └── Type.kt
+```
+
+**Planned but not yet created:** `vision/`, `spotify/`, `service/`, `data/`, `domain/`, `di/` packages.
+
+The `domain/` layer must have **zero Android imports** so it can be unit-tested without instrumentation.
 
 ## Gesture-to-Command Mapping
 
 **Mappings are fully user-customizable.** Different users have different motor capabilities — what is comfortable for one user may be impossible for another. Therefore the app must NOT enforce a fixed gesture→action mapping.
 
 ### Supported Gestures (Vocabulary)
-
-The classifier must reliably detect at least the following gestures. New gestures may be added later, but each addition requires updated calibration logic and tests.
 
 | Gesture           | Detection signal                                 |
 | ----------------- | ------------------------------------------------ |
@@ -56,8 +82,6 @@ The classifier must reliably detect at least the following gestures. New gesture
 
 ### Default Mapping
 
-The app ships with a default mapping for first-time users, but it MUST be editable on the "Configurar Gestos" screen and persisted in SQLite.
-
 | Default gesture   | Default action   |
 | ----------------- | ---------------- |
 | `TILT_HEAD_RIGHT` | `VOLUME_UP`      |
@@ -77,32 +101,16 @@ The app ships with a default mapping for first-time users, but it MUST be editab
 
 > **TCC defense angle:** Gesture customization is itself an accessibility feature. Hardcoding the mapping would exclude users who cannot perform a specific gesture. Cite WCAG 2.1 SC 2.5.6 (Concurrent Input Mechanisms) when questioned.
 
-## Architecture (When Code Exists)
+## Architecture
 
-The app is designed in four layers:
+Four layers:
 
-1. **Presentation** — Jetpack Compose Views + ViewModels. Five screens: Login (OAuth), Home/Dashboard, Calibration, Command Mapping, Active Tracking.
+1. **Presentation** — Jetpack Compose screens + ViewModels. Five screens: Login (OAuth), Home/Dashboard, Calibration, Command Mapping, Active Tracking.
 2. **Processing** — OpenCV manages the Android Camera2 API buffer; MediaPipe Face Mesh extracts facial landmarks and classifies gestures.
 3. **Integration** — REST client sends commands to the Spotify Web API; responses trigger UI feedback.
 4. **Data** — SQLite stores per-user calibration parameters (amplitude thresholds) and customized gesture-to-command mappings.
 
 An Android `AccessibilityService` (or Broadcast mechanism) is needed so commands reach Spotify when it runs in the background.
-
-### Suggested module structure
-
-```
-app/
-└── src/main/java/com/sac/
-    ├── ui/              # Compose screens + ViewModels (one folder per screen)
-    ├── vision/          # OpenCV + MediaPipe pipeline (CameraProcessor, GestureClassifier)
-    ├── spotify/         # Auth, REST client, command dispatcher
-    ├── service/         # AccessibilityService and background coordination
-    ├── data/            # Room entities, DAOs, repositories
-    ├── domain/          # Use cases (pure Kotlin, no Android imports)
-    └── di/              # Hilt modules
-```
-
-The `domain/` layer must have **zero Android imports** so it can be unit-tested without instrumentation.
 
 ## Key Non-Functional Requirements
 
@@ -151,8 +159,20 @@ The target user has motor disabilities — touch interactions are limited. There
 
 - One Composable per screen file, named after the screen (`CalibrationScreen.kt`).
 - State hoisting: Composables are stateless; ViewModels own state via `StateFlow`.
-- Use `@Preview` for every reusable Composable (with both light and dark themes).
+- Use `@Preview` for every reusable Composable. All `@Preview` functions must be `private` and annotated with `@Suppress("UnusedPrivateMember")` — Detekt cannot see Android Studio's runtime usage of them.
 - No business logic inside Composables — only rendering and event forwarding.
+
+### Design tokens
+
+All screens import color constants directly from `ui/theme/Color.kt` (`BackgroundDark`, `SpotifyGreen`, `TextPrimary`, etc.) — do **not** use `MaterialTheme.colorScheme` for these. Typography uses `MaterialTheme.typography`.
+
+### Directional icons
+
+Use `Icons.AutoMirrored.Filled.*` for directional icons (`ArrowBack`, `KeyboardArrowLeft`, `KeyboardArrowRight`) — the `Icons.Filled.*` variants are deprecated and emit compiler warnings. The import is `androidx.compose.material.icons.automirrored.filled.*`.
+
+### Detekt: one public declaration per file
+
+Detekt enforces `MatchingDeclarationName`: if a `.kt` file has a single public top-level declaration, the file name must match it. When a screen needs a companion data class (e.g., `PlayerAtivoUiState` for `PlayerAtivoScreen`), put it in its own file. Similarly, `sealed class Screen` lives in `Screen.kt`, not in `SacNavGraph.kt`.
 
 ### MVVM
 
@@ -191,8 +211,6 @@ The target user has motor disabilities — touch interactions are limited. There
 
 ## Testing Strategy
 
-For each layer:
-
 - **Domain (use cases):** pure JUnit + MockK. 100% target coverage on critical paths.
 - **Data (repositories, DAOs):** Room in-memory tests.
 - **Vision (classifier):** synthetic landmark fixtures stored in `test/resources/landmarks/`. Test each gesture's positive and negative cases (false positive matters more than miss for accessibility).
@@ -214,9 +232,9 @@ Minimum gate before merge: `./gradlew ktlintCheck detekt test` passes, no new wa
 | `documento_prototipagem.md` | Prototyping support doc — screen wireframe descriptions and user flows |
 | `Protótipo/protótipo.md`    | Prototype assets                                                       |
 
-## Hardware Requirements (Target Device)
+## Hardware Requirements
 
-- Android 10+ (API 29+), front camera ≥ 720p, active internet connection, active Spotify account (Free or Premium — note that some Spotify Web API endpoints require Premium; document this limitation).
+Android 10+ (API 29+), front camera ≥ 720p, active internet connection, active Spotify account (Free or Premium — note that some Spotify Web API endpoints require Premium; document this limitation).
 
 ## Useful Commands
 
@@ -230,9 +248,11 @@ Minimum gate before merge: `./gradlew ktlintCheck detekt test` passes, no new wa
 # Run instrumented tests (needs emulator/device)
 ./gradlew connectedAndroidTest
 
-# Lint & format
-./gradlew ktlintCheck
+# Auto-fix formatting (run before ktlintCheck)
 ./gradlew ktlintFormat
+
+# Lint & static analysis
+./gradlew ktlintCheck
 ./gradlew detekt
 
 # Full pre-commit gate
