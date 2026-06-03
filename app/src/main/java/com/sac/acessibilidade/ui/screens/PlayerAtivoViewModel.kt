@@ -54,6 +54,7 @@ class PlayerAtivoViewModel
                                 isLoading = false,
                                 trackTitle = response.item?.name ?: "Desconhecido",
                                 trackArtist = response.item?.artists?.firstOrNull()?.name ?: "",
+                                albumArtUrl = response.item?.album?.bestImageUrl(300),
                                 isPlaying = response.isPlaying,
                                 error = null,
                             )

@@ -117,6 +117,10 @@ dependencies {
     // Segurança — tokens OAuth nunca em SharedPreferences simples
     implementation(libs.security.crypto)
 
+    // Imagens — album art do Spotify via Coil + OkHttp
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
     // Testes unitários
     testImplementation(libs.junit4)
     testImplementation(libs.mockk)

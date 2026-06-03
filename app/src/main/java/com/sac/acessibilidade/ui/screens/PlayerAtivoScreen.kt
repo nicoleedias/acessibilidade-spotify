@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.ErrorRed
@@ -142,6 +144,7 @@ fun PlayerAtivoScreen(
                     NowPlayingCard(
                         trackTitle = uiState.trackTitle,
                         trackArtist = uiState.trackArtist,
+                        albumArtUrl = uiState.albumArtUrl,
                         isPlaying = uiState.isPlaying,
                     )
                 }
@@ -265,6 +268,7 @@ private fun GestureFeedbackPill(
 private fun NowPlayingCard(
     trackTitle: String,
     trackArtist: String,
+    albumArtUrl: String?,
     isPlaying: Boolean,
 ) {
     val playDesc = stringResource(R.string.player_ativo_play_button_description)
@@ -280,14 +284,15 @@ private fun NowPlayingCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Album art placeholder
-        Box(
+        AsyncImage(
+            model = albumArtUrl,
+            contentDescription = albumDesc,
+            contentScale = ContentScale.Crop,
             modifier =
                 Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(SurfaceVariantDark)
-                    .semantics { contentDescription = albumDesc },
+                    .background(SurfaceVariantDark),
         )
 
         Spacer(modifier = Modifier.width(14.dp))
