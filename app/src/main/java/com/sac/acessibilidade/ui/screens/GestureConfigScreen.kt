@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,12 +31,18 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,7 +83,6 @@ private val defaultGestureMappings =
         ),
         GestureMappingUi(
             gestureName = "Piscar Olho Direito",
-            // TODO: Icons.Extended.RemoveRedEye quando ícones estendidos forem adicionados
             selectedAction = "Aumentar Volume",
             icon = Icons.Default.Face,
         ),
@@ -88,12 +93,25 @@ private val defaultGestureMappings =
         ),
     )
 
+private val availableActions =
+    listOf(
+        "Próxima Faixa",
+        "Faixa Anterior",
+        "Tocar / Pausar",
+        "Aumentar Volume",
+        "Diminuir Volume",
+        "(Sem ação)",
+    )
+
 @Composable
 fun GestureConfigScreen(
-    gestureMappings: List<GestureMappingUi> = defaultGestureMappings,
+    initialMappings: List<GestureMappingUi> = defaultGestureMappings,
     onBack: () -> Unit = {},
     onSaveClick: () -> Unit = {},
 ) {
+    // Estado local — será migrado para GestureConfigViewModel + Room no UC03
+    var mappings by remember { mutableStateOf(initialMappings) }
+
     Scaffold(
         containerColor = BackgroundDark,
         topBar = {
@@ -122,11 +140,15 @@ fun GestureConfigScreen(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
-            items(gestureMappings) { mapping ->
+            itemsIndexed(mappings) { index, mapping ->
                 GestureMappingCard(
                     mapping = mapping,
-                    // onActionClick será conectado ao GestureConfigViewModel no UC03
-                    onActionClick = {},
+                    onActionSelected = { action ->
+                        mappings =
+                            mappings.toMutableList().also {
+                                it[index] = it[index].copy(selectedAction = action)
+                            }
+                    },
                 )
             }
         }
@@ -211,8 +233,10 @@ private fun GestureConfigBottomBar(onSaveClick: () -> Unit) {
 @Composable
 private fun GestureMappingCard(
     mapping: GestureMappingUi,
-    onActionClick: () -> Unit,
+    onActionSelected: (String) -> Unit,
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Column(
         modifier =
             Modifier
@@ -222,7 +246,6 @@ private fun GestureMappingCard(
                 .padding(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Linha superior: ícone do gesto + nome do gesto
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier =
@@ -248,35 +271,62 @@ private fun GestureMappingCard(
             )
         }
 
-        // Dropdown: toque para trocar a ação mapeada a este gesto (UC03)
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(BackgroundDark)
-                    .border(1.dp, SurfaceVariantDark, RoundedCornerShape(14.dp))
-                    .clickable(onClick = onActionClick)
-                    .semantics {
-                        contentDescription =
-                            "Selecionar ação para ${mapping.gestureName}: ${mapping.selectedAction}"
-                        role = Role.Button
-                    }
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = mapping.selectedAction,
-                style = MaterialTheme.typography.titleMedium,
-                color = TextSecondary,
-            )
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                tint = TextMuted,
-                modifier = Modifier.size(18.dp),
-            )
+        Box {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(BackgroundDark)
+                        .border(1.dp, SurfaceVariantDark, RoundedCornerShape(14.dp))
+                        .clickable { expanded = true }
+                        .semantics {
+                            contentDescription =
+                                "Ação para ${mapping.gestureName}: ${mapping.selectedAction}. Toque para alterar"
+                            role = Role.Button
+                        }
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = mapping.selectedAction,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextSecondary,
+                )
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = TextMuted,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(SurfaceDark),
+            ) {
+                availableActions.forEach { action ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = action,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (action == mapping.selectedAction) SpotifyGreen else TextPrimary,
+                            )
+                        },
+                        onClick = {
+                            onActionSelected(action)
+                            expanded = false
+                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = action
+                            },
+                    )
+                }
+            }
         }
     }
 }

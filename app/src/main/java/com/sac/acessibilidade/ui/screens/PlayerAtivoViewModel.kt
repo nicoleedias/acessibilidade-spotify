@@ -46,7 +46,7 @@ class PlayerAtivoViewModel
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                trackTitle = "Nada tocando no momento",
+                                trackTitle = "Nada tocando",
                                 trackArtist = "",
                                 albumArtUrl = null,
                                 isPlaying = false,
