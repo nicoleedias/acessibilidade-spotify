@@ -5,6 +5,8 @@ import com.sac.acessibilidade.BuildConfig
 import com.sac.acessibilidade.spotify.auth.SpotifyAuthInterceptor
 import com.sac.acessibilidade.spotify.auth.SpotifyAuthRepository
 import com.sac.acessibilidade.spotify.auth.SpotifyAuthRepositoryImpl
+import com.sac.acessibilidade.spotify.player.SpotifyCommandRepository
+import com.sac.acessibilidade.spotify.player.SpotifyCommandRepositoryImpl
 import com.sac.acessibilidade.spotify.player.SpotifyPlayerApi
 import com.sac.acessibilidade.spotify.player.SpotifyPlayerRepository
 import com.sac.acessibilidade.spotify.player.SpotifyPlayerRepositoryImpl
@@ -31,6 +33,10 @@ abstract class SpotifyModule {
     @Binds
     @Singleton
     abstract fun bindSpotifyPlayerRepository(impl: SpotifyPlayerRepositoryImpl): SpotifyPlayerRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSpotifyCommandRepository(impl: SpotifyCommandRepositoryImpl): SpotifyCommandRepository
 
     companion object {
         @Provides

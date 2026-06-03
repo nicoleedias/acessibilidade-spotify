@@ -24,11 +24,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.VolumeDown
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,6 +69,11 @@ import com.sac.acessibilidade.ui.theme.TextPrimary
 fun PlayerAtivoScreen(
     uiState: PlayerAtivoUiState = PlayerAtivoUiState(),
     onStopTracking: () -> Unit = {},
+    onPlayPauseClick: () -> Unit = {},
+    onSkipNextClick: () -> Unit = {},
+    onSkipPreviousClick: () -> Unit = {},
+    onVolumeUpClick: () -> Unit = {},
+    onVolumeDownClick: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         CameraFeedPlaceholder()
@@ -146,7 +156,24 @@ fun PlayerAtivoScreen(
                         trackArtist = uiState.trackArtist,
                         albumArtUrl = uiState.albumArtUrl,
                         isPlaying = uiState.isPlaying,
+                        onPlayPauseClick = onPlayPauseClick,
                     )
+                    PlaybackControlsRow(
+                        volumePercent = uiState.volumePercent,
+                        onSkipPreviousClick = onSkipPreviousClick,
+                        onSkipNextClick = onSkipNextClick,
+                        onVolumeDownClick = onVolumeDownClick,
+                        onVolumeUpClick = onVolumeUpClick,
+                    )
+                    if (uiState.commandError != null) {
+                        Text(
+                            text = uiState.commandError,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ErrorRed,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
 
@@ -270,6 +297,7 @@ private fun NowPlayingCard(
     trackArtist: String,
     albumArtUrl: String?,
     isPlaying: Boolean,
+    onPlayPauseClick: () -> Unit,
 ) {
     val playDesc = stringResource(R.string.player_ativo_play_button_description)
     val pauseDesc = stringResource(R.string.player_ativo_pause_button_description)
@@ -317,12 +345,52 @@ private fun NowPlayingCard(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        Icon(
-            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-            contentDescription = if (isPlaying) pauseDesc else playDesc,
-            tint = SpotifyGreen,
-            modifier = Modifier.size(28.dp),
+        IconButton(onClick = onPlayPauseClick) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = if (isPlaying) pauseDesc else playDesc,
+                tint = SpotifyGreen,
+                modifier = Modifier.size(28.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlaybackControlsRow(
+    volumePercent: Int,
+    onSkipPreviousClick: () -> Unit,
+    onSkipNextClick: () -> Unit,
+    onVolumeDownClick: () -> Unit,
+    onVolumeUpClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(SurfaceDark)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onSkipPreviousClick) {
+            Icon(Icons.Default.SkipPrevious, contentDescription = "Faixa anterior", tint = TextPrimary)
+        }
+        IconButton(onClick = onSkipNextClick) {
+            Icon(Icons.Default.SkipNext, contentDescription = "Próxima faixa", tint = TextPrimary)
+        }
+        IconButton(onClick = onVolumeDownClick) {
+            Icon(Icons.Default.VolumeDown, contentDescription = "Volume -5", tint = TextPrimary)
+        }
+        Text(
+            text = "$volumePercent%",
+            style = MaterialTheme.typography.labelSmall,
+            color = TextMuted,
         )
+        IconButton(onClick = onVolumeUpClick) {
+            Icon(Icons.Default.VolumeUp, contentDescription = "Volume +5", tint = TextPrimary)
+        }
     }
 }
 

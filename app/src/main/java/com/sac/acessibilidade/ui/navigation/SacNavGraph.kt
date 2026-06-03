@@ -111,6 +111,11 @@ fun SacNavHost(
             PlayerAtivoScreen(
                 uiState = uiState,
                 onStopTracking = { navController.popBackStack() },
+                onPlayPauseClick = viewModel::togglePlayPause,
+                onSkipNextClick = viewModel::skipToNext,
+                onSkipPreviousClick = viewModel::skipToPrevious,
+                onVolumeUpClick = viewModel::volumeUp,
+                onVolumeDownClick = viewModel::volumeDown,
             )
         }
     }
