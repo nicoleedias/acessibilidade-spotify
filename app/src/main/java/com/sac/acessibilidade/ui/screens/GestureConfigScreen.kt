@@ -1,5 +1,8 @@
 package com.sac.acessibilidade.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,8 +34,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,42 +68,15 @@ import com.sac.acessibilidade.ui.theme.TextSecondary
 
 private val defaultGestureMappings =
     listOf(
-        GestureMappingUi(
-            gestureName = "Inclinar para Direita",
-            selectedAction = "Próxima Faixa",
-            icon = Icons.Default.KeyboardArrowRight,
-        ),
-        GestureMappingUi(
-            gestureName = "Inclinar para Esquerda",
-            selectedAction = "Faixa Anterior",
-            icon = Icons.Default.KeyboardArrowLeft,
-        ),
-        GestureMappingUi(
-            gestureName = "Inclinar para Cima",
-            selectedAction = "Tocar / Pausar",
-            icon = Icons.Default.KeyboardArrowUp,
-        ),
-        GestureMappingUi(
-            gestureName = "Piscar Olho Direito",
-            selectedAction = "Aumentar Volume",
-            icon = Icons.Default.Face,
-        ),
-        GestureMappingUi(
-            gestureName = "Piscar Olho Esquerdo",
-            selectedAction = "Diminuir Volume",
-            icon = Icons.Default.Face,
-        ),
+        GestureMappingUi("Inclinar para Direita", "Próxima Faixa", Icons.Default.KeyboardArrowRight),
+        GestureMappingUi("Inclinar para Esquerda", "Faixa Anterior", Icons.Default.KeyboardArrowLeft),
+        GestureMappingUi("Inclinar para Cima", "Tocar / Pausar", Icons.Default.KeyboardArrowUp),
+        GestureMappingUi("Piscar Olho Direito", "Aumentar Volume", Icons.Default.Face),
+        GestureMappingUi("Piscar Olho Esquerdo", "Diminuir Volume", Icons.Default.Face),
     )
 
 private val availableActions =
-    listOf(
-        "Próxima Faixa",
-        "Faixa Anterior",
-        "Tocar / Pausar",
-        "Aumentar Volume",
-        "Diminuir Volume",
-        "(Sem ação)",
-    )
+    listOf("Próxima Faixa", "Faixa Anterior", "Tocar / Pausar", "Aumentar Volume", "Diminuir Volume", "(Sem ação)")
 
 @Composable
 fun GestureConfigScreen(
@@ -109,17 +84,12 @@ fun GestureConfigScreen(
     onBack: () -> Unit = {},
     onSaveClick: () -> Unit = {},
 ) {
-    // Estado local — será migrado para GestureConfigViewModel + Room no UC03
     var mappings by remember { mutableStateOf(initialMappings) }
 
     Scaffold(
         containerColor = BackgroundDark,
-        topBar = {
-            GestureConfigTopBar(onBack = onBack)
-        },
-        bottomBar = {
-            GestureConfigBottomBar(onSaveClick = onSaveClick)
-        },
+        topBar = { GestureConfigTopBar(onBack = onBack) },
+        bottomBar = { GestureConfigBottomBar(onSaveClick = onSaveClick) },
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -144,10 +114,7 @@ fun GestureConfigScreen(
                 GestureMappingCard(
                     mapping = mapping,
                     onActionSelected = { action ->
-                        mappings =
-                            mappings.toMutableList().also {
-                                it[index] = it[index].copy(selectedAction = action)
-                            }
+                        mappings = mappings.toMutableList().also { it[index] = it[index].copy(selectedAction = action) }
                     },
                 )
             }
@@ -164,29 +131,18 @@ private fun GestureConfigTopBar(onBack: () -> Unit) {
                 .background(BackgroundDark)
                 .statusBarsPadding()
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
-                .border(
-                    width = 0.5.dp,
-                    color = BorderDark.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(0.dp),
-                ),
+                .border(width = 0.5.dp, color = BorderDark.copy(alpha = 0.5f), shape = RoundedCornerShape(0.dp)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
             onClick = onBack,
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .semantics { contentDescription = "Voltar" },
+            modifier = Modifier.size(40.dp).semantics { contentDescription = "Voltar" },
         ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = null,
-                tint = TextPrimary,
-            )
+            Icon(Icons.Default.ArrowBack, contentDescription = null, tint = TextPrimary)
         }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = stringResource(R.string.gestures_title),
+            stringResource(R.string.gestures_title),
             style = MaterialTheme.typography.headlineSmall,
             color = TextPrimary,
         )
@@ -206,26 +162,13 @@ private fun GestureConfigBottomBar(onSaveClick: () -> Unit) {
         val saveLabel = stringResource(R.string.gestures_save)
         Button(
             onClick = onSaveClick,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .semantics { contentDescription = saveLabel },
+            modifier = Modifier.fillMaxWidth().height(56.dp).semantics { contentDescription = saveLabel },
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
         ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = TextPrimary,
-                modifier = Modifier.size(20.dp),
-            )
+            Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = saveLabel,
-                style = MaterialTheme.typography.labelLarge,
-                color = TextPrimary,
-            )
+            Text(saveLabel, style = MaterialTheme.typography.labelLarge, color = TextPrimary)
         }
     }
 }
@@ -236,6 +179,7 @@ private fun GestureMappingCard(
     onActionSelected: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val borderColor = if (expanded) SpotifyGreen else SurfaceVariantDark
 
     Column(
         modifier =
@@ -256,30 +200,26 @@ private fun GestureMappingCard(
                         .border(0.5.dp, BorderDark.copy(alpha = 0.5f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = mapping.icon,
-                    contentDescription = null,
-                    tint = SpotifyGreen,
-                    modifier = Modifier.size(24.dp),
-                )
+                Icon(mapping.icon, contentDescription = null, tint = SpotifyGreen, modifier = Modifier.size(24.dp))
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = mapping.gestureName,
-                style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
-            )
+            Text(mapping.gestureName, style = MaterialTheme.typography.titleMedium, color = TextPrimary)
         }
 
-        Box {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Gatilho do dropdown
             Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(if (expanded) RoundedCornerShape(14.dp, 14.dp, 0.dp, 0.dp) else RoundedCornerShape(14.dp))
                         .background(BackgroundDark)
-                        .border(1.dp, SurfaceVariantDark, RoundedCornerShape(14.dp))
-                        .clickable { expanded = true }
+                        .border(
+                            1.dp,
+                            borderColor,
+                            if (expanded) RoundedCornerShape(14.dp, 14.dp, 0.dp, 0.dp) else RoundedCornerShape(14.dp),
+                        )
+                        .clickable { expanded = !expanded }
                         .semantics {
                             contentDescription =
                                 "Ação para ${mapping.gestureName}: ${mapping.selectedAction}. Toque para alterar"
@@ -289,42 +229,69 @@ private fun GestureMappingCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = mapping.selectedAction,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextSecondary,
-                )
+                Text(mapping.selectedAction, style = MaterialTheme.typography.titleMedium, color = TextSecondary)
                 Icon(
                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
-                    tint = TextMuted,
+                    tint = if (expanded) SpotifyGreen else TextMuted,
                     modifier = Modifier.size(18.dp),
                 )
             }
 
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.background(SurfaceDark),
+            // Lista de opções (expansão inline — sem popup flutuante)
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(),
+                exit = shrinkVertically(),
             ) {
-                availableActions.forEach { action ->
-                    DropdownMenuItem(
-                        text = {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(0.dp, 0.dp, 14.dp, 14.dp))
+                            .background(BackgroundDark)
+                            .border(
+                                1.dp,
+                                SpotifyGreen,
+                                RoundedCornerShape(0.dp, 0.dp, 14.dp, 14.dp),
+                            ),
+                ) {
+                    availableActions.forEachIndexed { i, action ->
+                        val isSelected = action == mapping.selectedAction
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onActionSelected(action)
+                                        expanded = false
+                                    }
+                                    .semantics {
+                                        contentDescription = action
+                                        role = Role.Button
+                                    }
+                                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
                             Text(
                                 text = action,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (action == mapping.selectedAction) SpotifyGreen else TextPrimary,
+                                color = if (isSelected) SpotifyGreen else TextPrimary,
                             )
-                        },
-                        onClick = {
-                            onActionSelected(action)
-                            expanded = false
-                        },
-                        modifier =
-                            Modifier.semantics {
-                                contentDescription = action
-                            },
-                    )
+                            if (isSelected) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = SpotifyGreen,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        }
+                        if (i < availableActions.lastIndex) {
+                            HorizontalDivider(color = SurfaceVariantDark.copy(alpha = 0.5f), thickness = 0.5.dp)
+                        }
+                    }
                 }
             }
         }

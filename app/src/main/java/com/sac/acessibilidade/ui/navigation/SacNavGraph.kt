@@ -15,6 +15,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.sac.acessibilidade.ui.screens.CalibrationScreen
+import com.sac.acessibilidade.ui.screens.CalibrationViewModel
 import com.sac.acessibilidade.ui.screens.GestureConfigScreen
 import com.sac.acessibilidade.ui.screens.HomeScreen
 import com.sac.acessibilidade.ui.screens.HomeViewModel
@@ -90,10 +91,13 @@ fun SacNavHost(
         }
 
         composable(Screen.Calibration.route) {
+            val viewModel: CalibrationViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             CalibrationScreen(
-                onBack = { navController.popBackStack() },
-                // TODO: onConfirm deve chamar SaveCalibrationUseCase antes de popar [UC02]
+                uiState = uiState,
+                onAdvance = viewModel::advance,
                 onConfirm = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
             )
         }
 

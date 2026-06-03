@@ -121,6 +121,12 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
+    // Câmera — CameraX para preview frontal (calibração e rastreamento)
+    implementation(libs.camera.core)
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.lifecycle)
+    implementation(libs.camera.view)
+
     // Testes unitários
     testImplementation(libs.junit4)
     testImplementation(libs.mockk)
