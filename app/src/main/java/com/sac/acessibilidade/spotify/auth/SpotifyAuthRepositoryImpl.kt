@@ -3,6 +3,7 @@ package com.sac.acessibilidade.spotify.auth
 import android.net.Uri
 import com.sac.acessibilidade.spotify.auth.model.SpotifyTokenResponse
 import com.sac.acessibilidade.spotify.auth.model.SpotifyTokens
+import com.sac.acessibilidade.spotify.di.UnauthenticatedOkHttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -22,7 +23,7 @@ class SpotifyAuthRepositoryImpl
     @Inject
     constructor(
         private val tokenStore: SpotifyTokenStore,
-        private val okHttpClient: OkHttpClient,
+        @UnauthenticatedOkHttpClient private val okHttpClient: OkHttpClient,
         private val json: Json,
     ) : SpotifyAuthRepository {
         private val _authCodeFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)

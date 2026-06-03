@@ -52,6 +52,7 @@ import com.sac.acessibilidade.ui.theme.TextSecondary
 @Composable
 fun HomeScreen(
     userName: String = "João",
+    uiState: HomeUiState = HomeUiState(),
     onStartTrackingClick: () -> Unit = {},
     onCalibrateClick: () -> Unit = {},
     onConfigureGesturesClick: () -> Unit = {},
@@ -120,6 +121,21 @@ fun HomeScreen(
             iconBackground = Color(0xFFAD46FF).copy(alpha = 0.10f),
             onClick = onConfigureGesturesClick,
         )
+
+        if (uiState.nowPlayingTitle != null) {
+            Spacer(modifier = Modifier.height(28.dp))
+            Text(
+                text = "Tocando agora",
+                style = MaterialTheme.typography.labelMedium,
+                color = TextMuted,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            NowPlayingMiniCard(
+                title = uiState.nowPlayingTitle,
+                artist = uiState.nowPlayingArtist.orEmpty(),
+                isPlaying = uiState.isPlaying,
+            )
+        }
     }
 }
 
@@ -233,6 +249,55 @@ private fun HomeActionCard(
             tint = SurfaceVariantDark,
             modifier = Modifier.size(20.dp),
         )
+    }
+}
+
+@Composable
+private fun NowPlayingMiniCard(
+    title: String,
+    artist: String,
+    isPlaying: Boolean,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(SurfaceDark)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .background(SurfaceVariantDark, RoundedCornerShape(10.dp)),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = TextPrimary,
+                maxLines = 1,
+            )
+            if (artist.isNotBlank()) {
+                Text(
+                    text = artist,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextMuted,
+                    maxLines = 1,
+                )
+            }
+        }
+        if (isPlaying) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(10.dp)
+                        .background(SpotifyGreen, CircleShape),
+            )
+        }
     }
 }
 

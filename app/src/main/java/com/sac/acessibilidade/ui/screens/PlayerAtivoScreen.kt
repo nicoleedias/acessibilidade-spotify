@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -111,11 +113,39 @@ fun PlayerAtivoScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            NowPlayingCard(
-                trackTitle = uiState.trackTitle,
-                trackArtist = uiState.trackArtist,
-                isPlaying = uiState.isPlaying,
-            )
+            when {
+                uiState.isLoading -> {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(76.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = SpotifyGreen,
+                            strokeWidth = 2.dp,
+                        )
+                    }
+                }
+                uiState.error != null -> {
+                    Text(
+                        text = uiState.error,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ErrorRed,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                else -> {
+                    NowPlayingCard(
+                        trackTitle = uiState.trackTitle,
+                        trackArtist = uiState.trackArtist,
+                        isPlaying = uiState.isPlaying,
+                    )
+                }
+            }
 
             val stopLabel = stringResource(R.string.player_ativo_stop_button)
             val stopDesc = stringResource(R.string.player_ativo_stop_button_description)

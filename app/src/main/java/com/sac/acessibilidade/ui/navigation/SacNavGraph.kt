@@ -17,10 +17,12 @@ import androidx.navigation.compose.composable
 import com.sac.acessibilidade.ui.screens.CalibrationScreen
 import com.sac.acessibilidade.ui.screens.GestureConfigScreen
 import com.sac.acessibilidade.ui.screens.HomeScreen
+import com.sac.acessibilidade.ui.screens.HomeViewModel
 import com.sac.acessibilidade.ui.screens.LoginScreen
 import com.sac.acessibilidade.ui.screens.LoginUiState
 import com.sac.acessibilidade.ui.screens.LoginViewModel
 import com.sac.acessibilidade.ui.screens.PlayerAtivoScreen
+import com.sac.acessibilidade.ui.screens.PlayerAtivoViewModel
 
 @Composable
 fun SacNavHost(
@@ -70,8 +72,11 @@ fun SacNavHost(
         }
 
         composable(Screen.Home.route) {
+            val viewModel: HomeViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             HomeScreen(
-                // TODO: passar userName real do AuthViewModel [UC01]
+                uiState = uiState,
+                // TODO: passar userName real do perfil Spotify [UC01]
                 onStartTrackingClick = {
                     navController.navigate(Screen.PlayerAtivo.route)
                 },
@@ -101,7 +106,10 @@ fun SacNavHost(
         }
 
         composable(Screen.PlayerAtivo.route) {
+            val viewModel: PlayerAtivoViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             PlayerAtivoScreen(
+                uiState = uiState,
                 onStopTracking = { navController.popBackStack() },
             )
         }
