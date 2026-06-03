@@ -96,6 +96,7 @@ fun SacNavHost(
             CalibrationScreen(
                 uiState = uiState,
                 onAdvance = viewModel::advance,
+                onConfirmPosition = viewModel::confirmPosition,
                 onConfirm = { navController.popBackStack() },
                 onBack = { navController.popBackStack() },
             )

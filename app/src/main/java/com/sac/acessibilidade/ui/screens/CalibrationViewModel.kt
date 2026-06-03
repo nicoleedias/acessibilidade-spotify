@@ -24,7 +24,10 @@ class CalibrationViewModel
 
         private var holdJob: Job? = null
 
-        /** Chamado pelo botão "Começar" (step NEUTRAL) e pelo timer automático nos outros steps. */
+        /**
+         * Chamado pelo botão "Começar" (NEUTRAL) e pelo botão "Concluído" (DONE).
+         * NÃO avança nos passos de direção — para esses, o usuário usa [confirmPosition].
+         */
         fun advance() {
             holdJob?.cancel()
             val next =
@@ -36,14 +39,22 @@ class CalibrationViewModel
                     CalibrationStep.TILT_DOWN -> CalibrationStep.DONE
                     CalibrationStep.DONE -> CalibrationStep.DONE
                 }
-            _uiState.update { it.copy(step = next, holdProgress = 0f) }
-            when {
-                next == CalibrationStep.DONE -> saveThresholds()
-                next != CalibrationStep.NEUTRAL -> startHoldTimer()
-            }
+            _uiState.update { it.copy(step = next, holdProgress = 0f, isHolding = false) }
+            if (next == CalibrationStep.DONE) saveThresholds()
         }
 
-        private fun startHoldTimer() {
+        /**
+         * Chamado quando o usuário confirma que está na posição correta.
+         * Inicia um hold de [HOLD_DURATION_MS] ms com feedback de progresso.
+         * Quando completo, avança automaticamente para o próximo passo.
+         * Pode ser chamado novamente para reiniciar (usuário perdeu a posição).
+         *
+         * TODO (UC02): substituir pelo hold timer do MediaPipe — avançar quando
+         * os landmarks confirmarem que o ângulo está acima do threshold detectado.
+         */
+        fun confirmPosition() {
+            holdJob?.cancel()
+            _uiState.update { it.copy(isHolding = true, holdProgress = 0f) }
             holdJob =
                 viewModelScope.launch {
                     val stepDelayMs = HOLD_DURATION_MS / HOLD_STEPS
@@ -51,6 +62,7 @@ class CalibrationViewModel
                         delay(stepDelayMs)
                         _uiState.update { it.copy(holdProgress = (i + 1f) / HOLD_STEPS) }
                     }
+                    _uiState.update { it.copy(isHolding = false) }
                     advance()
                 }
         }
@@ -69,7 +81,7 @@ class CalibrationViewModel
         }
 
         companion object {
-            private const val HOLD_DURATION_MS = 2_500L
-            private const val HOLD_STEPS = 50
+            private const val HOLD_DURATION_MS = 2_000L
+            private const val HOLD_STEPS = 40
         }
     }

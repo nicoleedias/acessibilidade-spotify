@@ -12,5 +12,6 @@ enum class CalibrationStep {
 data class CalibrationUiState(
     val step: CalibrationStep = CalibrationStep.NEUTRAL,
     val holdProgress: Float = 0f,
+    val isHolding: Boolean = false,
     val isSaving: Boolean = false,
 )

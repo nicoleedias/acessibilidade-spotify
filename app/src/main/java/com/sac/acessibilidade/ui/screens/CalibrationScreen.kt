@@ -76,13 +76,23 @@ import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.SacTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
+import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
 import androidx.camera.core.Preview as CameraPreviewUseCase
+
+private val directionSteps =
+    listOf(
+        CalibrationStep.TILT_RIGHT,
+        CalibrationStep.TILT_LEFT,
+        CalibrationStep.TILT_UP,
+        CalibrationStep.TILT_DOWN,
+    )
 
 @Composable
 fun CalibrationScreen(
     uiState: CalibrationUiState = CalibrationUiState(),
     onAdvance: () -> Unit = {},
+    onConfirmPosition: () -> Unit = {},
     onConfirm: () -> Unit = {},
     onBack: () -> Unit = {},
 ) {
@@ -105,7 +115,6 @@ fun CalibrationScreen(
         val ovalWidth = maxWidth * 0.78f
         val ovalHeight = maxHeight * 0.56f
 
-        // Câmera ou fundo escuro
         if (hasCameraPermission) {
             CameraPreview(modifier = Modifier.fillMaxSize())
         } else {
@@ -126,7 +135,6 @@ fun CalibrationScreen(
             }
         }
 
-        // Overlay + oval + setas + progresso
         FaceGuideOverlay(
             uiState = uiState,
             ovalWidth = ovalWidth,
@@ -162,7 +170,7 @@ fun CalibrationScreen(
             )
         }
 
-        // Instrução animada
+        // Instrução dinâmica com fade entre etapas
         AnimatedContent(
             targetState = instructionFor(uiState.step),
             transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
@@ -184,33 +192,17 @@ fun CalibrationScreen(
             }
         }
 
-        // Indicador de etapas
-        if (uiState.step != CalibrationStep.NEUTRAL && uiState.step != CalibrationStep.DONE) {
-            StepDots(
-                current = uiState.step,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .navigationBarsPadding()
-                        .padding(bottom = 24.dp),
-            )
-        }
-
-        // Botão apenas em NEUTRAL e DONE
-        if (uiState.step == CalibrationStep.NEUTRAL || uiState.step == CalibrationStep.DONE) {
-            CalibrationButton(
-                uiState = uiState,
-                onAdvance = onAdvance,
-                onConfirm = onConfirm,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(BackgroundDark)
-                        .navigationBarsPadding()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
-            )
-        }
+        // Painel inferior — sempre visível
+        CalibrationBottomPanel(
+            uiState = uiState,
+            onAdvance = onAdvance,
+            onConfirmPosition = onConfirmPosition,
+            onConfirm = onConfirm,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+        )
     }
 }
 
@@ -223,35 +215,28 @@ private fun FaceGuideOverlay(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = uiState.holdProgress,
-        animationSpec = tween(80),
+        animationSpec = tween(60),
         label = "hold_progress",
-    )
-    val progressColor by animateColorAsState(
-        targetValue = if (uiState.step == CalibrationStep.DONE) SpotifyGreen else SpotifyGreen,
-        label = "progress_color",
     )
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // Máscara escura
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawRect(color = Color.Black.copy(alpha = 0.50f))
         }
 
-        // Oval guide + progresso
         Box(
             modifier = Modifier.size(ovalWidth + 48.dp, ovalHeight + 48.dp),
             contentAlignment = Alignment.Center,
         ) {
             Canvas(modifier = Modifier.size(ovalWidth, ovalHeight)) {
-                val strokeWidth = 2.5.dp.toPx()
+                val baseStroke = 2.5.dp.toPx()
                 val progressStroke = 5.dp.toPx()
 
-                // Oval tracejado base
                 drawOval(
-                    color = Color.White.copy(alpha = 0.45f),
+                    color = Color.White.copy(alpha = if (uiState.isHolding) 0.25f else 0.50f),
                     style =
                         Stroke(
-                            width = strokeWidth,
+                            width = baseStroke,
                             pathEffect =
                                 PathEffect.dashPathEffect(
                                     intervals = floatArrayOf(14.dp.toPx(), 8.dp.toPx()),
@@ -260,10 +245,9 @@ private fun FaceGuideOverlay(
                         ),
                 )
 
-                // Arco de progresso sólido (fill clockwise)
                 if (animatedProgress > 0f) {
                     drawArc(
-                        color = progressColor,
+                        color = SpotifyGreen,
                         startAngle = -90f,
                         sweepAngle = 360f * animatedProgress,
                         useCenter = false,
@@ -274,7 +258,6 @@ private fun FaceGuideOverlay(
                 }
             }
 
-            // Setas direcionais nos quatro lados
             DirectionArrow(
                 icon = Icons.Default.KeyboardArrowUp,
                 contentDescription = "Incline para cima",
@@ -319,9 +302,104 @@ private fun DirectionArrow(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = if (isActive) Color.White else Color.White.copy(alpha = 0.6f),
+            tint = if (isActive) Color.White else Color.White.copy(alpha = 0.5f),
             modifier = Modifier.size(30.dp),
         )
+    }
+}
+
+@Composable
+private fun CalibrationBottomPanel(
+    uiState: CalibrationUiState,
+    onAdvance: () -> Unit,
+    onConfirmPosition: () -> Unit,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .background(BackgroundDark)
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        when (uiState.step) {
+            CalibrationStep.NEUTRAL -> {
+                Button(
+                    onClick = onAdvance,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Começar calibração", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
+                }
+            }
+
+            CalibrationStep.TILT_RIGHT,
+            CalibrationStep.TILT_LEFT,
+            CalibrationStep.TILT_UP,
+            CalibrationStep.TILT_DOWN,
+            -> {
+                val stepIndex = directionSteps.indexOf(uiState.step) + 1
+                StepDots(current = uiState.step, modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text(
+                    text = "Passo $stepIndex de 4 · ${holdHintFor(uiState)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick = onConfirmPosition,
+                    enabled = !uiState.isHolding,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
+                ) {
+                    if (uiState.isHolding) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = TextPrimary,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Mantendo posição...", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
+                    } else {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Confirmar posição atual",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = TextPrimary,
+                        )
+                    }
+                }
+            }
+
+            CalibrationStep.DONE -> {
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
+                ) {
+                    if (uiState.isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = TextPrimary,
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Concluído", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -330,64 +408,16 @@ private fun StepDots(
     current: CalibrationStep,
     modifier: Modifier = Modifier,
 ) {
-    val steps =
-        listOf(
-            CalibrationStep.TILT_RIGHT,
-            CalibrationStep.TILT_LEFT,
-            CalibrationStep.TILT_UP,
-            CalibrationStep.TILT_DOWN,
-        )
-    val currentIndex = steps.indexOf(current)
+    val currentIndex = directionSteps.indexOf(current)
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        steps.forEachIndexed { i, _ ->
-            val filled = i <= currentIndex
+        directionSteps.forEachIndexed { i, _ ->
             Box(
                 modifier =
                     Modifier
                         .size(if (i == currentIndex) 10.dp else 7.dp)
                         .clip(CircleShape)
-                        .background(if (filled) SpotifyGreen else Color.White.copy(alpha = 0.3f)),
+                        .background(if (i <= currentIndex) SpotifyGreen else Color.White.copy(alpha = 0.3f)),
             )
-        }
-    }
-}
-
-@Composable
-private fun CalibrationButton(
-    uiState: CalibrationUiState,
-    onAdvance: () -> Unit,
-    onConfirm: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier) {
-        if (uiState.step == CalibrationStep.DONE) {
-            val doneLabel = "Concluído"
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier.fillMaxWidth().height(56.dp).semantics { contentDescription = doneLabel },
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
-            ) {
-                if (uiState.isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = TextPrimary, strokeWidth = 2.dp)
-                } else {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(doneLabel, style = MaterialTheme.typography.labelLarge, color = TextPrimary)
-                }
-            }
-        } else {
-            val confirmLabel = stringResource(R.string.calibration_confirm)
-            Button(
-                onClick = onAdvance,
-                modifier = Modifier.fillMaxWidth().height(56.dp).semantics { contentDescription = confirmLabel },
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
-            ) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Começar", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
-            }
         }
     }
 }
@@ -427,12 +457,15 @@ private fun CameraPreview(modifier: Modifier = Modifier) {
 private fun instructionFor(step: CalibrationStep): String =
     when (step) {
         CalibrationStep.NEUTRAL -> "Posicione o rosto no oval e toque em Começar"
-        CalibrationStep.TILT_RIGHT -> "Incline a cabeça para a DIREITA →"
-        CalibrationStep.TILT_LEFT -> "← Incline a cabeça para a ESQUERDA"
-        CalibrationStep.TILT_UP -> "↑ Incline a cabeça para CIMA"
-        CalibrationStep.TILT_DOWN -> "↓ Incline a cabeça para BAIXO"
+        CalibrationStep.TILT_RIGHT -> "Incline a cabeça para a DIREITA o máximo confortável →"
+        CalibrationStep.TILT_LEFT -> "← Incline a cabeça para a ESQUERDA o máximo confortável"
+        CalibrationStep.TILT_UP -> "↑ Incline a cabeça para CIMA o máximo confortável"
+        CalibrationStep.TILT_DOWN -> "↓ Incline a cabeça para BAIXO o máximo confortável"
         CalibrationStep.DONE -> "✓ Calibração concluída!"
     }
+
+private fun holdHintFor(uiState: CalibrationUiState): String =
+    if (uiState.isHolding) "Mantenha a posição..." else "Incline e confirme quando estiver pronto"
 
 @Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
