@@ -115,6 +115,7 @@ fun SacNavHost(
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             PlayerAtivoScreen(
                 uiState = uiState,
+                gestureProcessor = viewModel.gestureProcessor,
                 onStopTracking = { navController.popBackStack() },
                 onPlayPauseClick = viewModel::togglePlayPause,
                 onSkipNextClick = viewModel::skipToNext,

@@ -1,5 +1,9 @@
 package com.sac.acessibilidade.ui.screens
 
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -54,6 +58,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
@@ -64,10 +71,14 @@ import com.sac.acessibilidade.ui.theme.SurfaceDark
 import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
 import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
+import com.sac.acessibilidade.vision.GestureProcessor
+import androidx.camera.core.Preview as CameraPreviewUseCase
 
+@Suppress("LongParameterList")
 @Composable
 fun PlayerAtivoScreen(
     uiState: PlayerAtivoUiState = PlayerAtivoUiState(),
+    gestureProcessor: GestureProcessor? = null,
     onStopTracking: () -> Unit = {},
     onPlayPauseClick: () -> Unit = {},
     onSkipNextClick: () -> Unit = {},
@@ -76,7 +87,11 @@ fun PlayerAtivoScreen(
     onVolumeDownClick: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        CameraFeedPlaceholder()
+        if (gestureProcessor != null) {
+            GestureCamera(gestureProcessor = gestureProcessor, modifier = Modifier.fillMaxSize())
+        } else {
+            CameraFeedPlaceholder()
+        }
 
         // Gradiente no topo para legibilidade do header
         Box(
@@ -204,6 +219,47 @@ fun PlayerAtivoScreen(
             }
         }
     }
+}
+
+@Composable
+private fun GestureCamera(
+    gestureProcessor: GestureProcessor,
+    modifier: Modifier = Modifier,
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    AndroidView(
+        factory = { ctx ->
+            PreviewView(ctx).apply {
+                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                scaleType = PreviewView.ScaleType.FILL_CENTER
+                val future = ProcessCameraProvider.getInstance(ctx)
+                future.addListener(
+                    {
+                        runCatching {
+                            val provider = future.get()
+                            val preview =
+                                CameraPreviewUseCase.Builder().build()
+                                    .also { it.setSurfaceProvider(surfaceProvider) }
+                            val imageAnalysis =
+                                ImageAnalysis.Builder()
+                                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                    .build()
+                                    .also { it.setAnalyzer(ContextCompat.getMainExecutor(ctx), gestureProcessor) }
+                            provider.unbindAll()
+                            provider.bindToLifecycle(
+                                lifecycleOwner,
+                                CameraSelector.DEFAULT_FRONT_CAMERA,
+                                preview,
+                                imageAnalysis,
+                            )
+                        }
+                    },
+                    ContextCompat.getMainExecutor(ctx),
+                )
+            }
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable

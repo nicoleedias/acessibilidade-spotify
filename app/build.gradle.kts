@@ -1,3 +1,4 @@
+import java.net.URL
 import java.util.Properties
 
 plugins {
@@ -40,6 +41,11 @@ android {
             "SPOTIFY_REDIRECT_URI",
             "\"${localProps.getProperty("SPOTIFY_REDIRECT_URI", "")}\"",
         )
+
+        // MediaPipe só tem binários para arm64-v8a e x86_64
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     buildTypes {
@@ -70,6 +76,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        jniLibs {
+            // MediaPipe e outras libs podem empacotar a mesma .so; pega a primeira encontrada
+            pickFirsts += setOf("lib/*/libopencv_java4.so")
+        }
     }
 }
 
@@ -82,6 +92,32 @@ ktlint {
     android.set(true)
     outputColorName.set("RED")
 }
+
+// Baixa o modelo face_landmarker.task se ainda não estiver em assets/.
+// O arquivo (~2,7 MB) está em .gitignore; nunca deve ser commitado.
+tasks.register("downloadFaceLandmarkerModel") {
+    val modelFile = project.file("src/main/assets/face_landmarker.task")
+    doLast {
+        if (!modelFile.exists()) {
+            modelFile.parentFile.mkdirs()
+            val url =
+                "https://storage.googleapis.com/mediapipe-models/face_landmarker/" +
+                    "face_landmarker/float16/latest/face_landmarker.task"
+            logger.lifecycle("⬇ Baixando face_landmarker.task de mediapipe-models…")
+            try {
+                URL(url).openStream().use { input ->
+                    modelFile.outputStream().use { output -> input.copyTo(output) }
+                }
+                logger.lifecycle("✓ face_landmarker.task baixado (${modelFile.length() / 1024} KB)")
+            } catch (e: Exception) {
+                logger.warn("✗ Falha ao baixar o modelo: ${e.message}")
+                logger.warn("Baixe manualmente: $url")
+                logger.warn("Coloque em: app/src/main/assets/face_landmarker.task")
+            }
+        }
+    }
+}
+tasks.named("preBuild") { dependsOn("downloadFaceLandmarkerModel") }
 
 dependencies {
     // Core
@@ -126,6 +162,9 @@ dependencies {
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
+
+    // Visão — MediaPipe Face Mesh para detecção de gestos cefálicos
+    implementation(libs.mediapipe.tasks.vision)
 
     // Testes unitários
     testImplementation(libs.junit4)
