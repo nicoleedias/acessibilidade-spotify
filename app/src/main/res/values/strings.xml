@@ -28,6 +28,7 @@
     <string name="gestures_title">Configurar Gestos</string>
     <string name="gestures_subtitle">Mapeie seus movimentos faciais para controlar a reprodução no Spotify.</string>
     <string name="gestures_save">Salvar Configurações</string>
+    <string name="gestures_restore_defaults">Restaurar padrões</string>
 
     <!-- Gestos -->
     <string name="gesture_tilt_right">Inclinar para Direita</string>

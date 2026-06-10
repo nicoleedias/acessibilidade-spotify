@@ -23,7 +23,17 @@ class HomeViewModel
         val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
         init {
+            fetchUserProfile()
             startPolling()
+        }
+
+        private fun fetchUserProfile() {
+            viewModelScope.launch {
+                playerRepository.getUserProfile()
+                    .onSuccess { profile ->
+                        _uiState.update { it.copy(userName = profile.displayName ?: profile.id) }
+                    }
+            }
         }
 
         private fun startPolling() {

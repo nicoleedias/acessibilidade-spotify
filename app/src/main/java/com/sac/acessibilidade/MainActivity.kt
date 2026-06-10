@@ -36,9 +36,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleSpotifyCallback(intent: Intent?) {
-        val uri = intent?.data ?: return
-        if (uri.scheme == "sac" && uri.host == "callback") {
-            val code = uri.getQueryParameter("code") ?: return
+        val uri = intent?.data?.takeIf { it.scheme == "sac" && it.host == "callback" } ?: return
+        val code = uri.getQueryParameter("code") ?: return
+        val state = uri.getQueryParameter("state")
+        if (state != null && authRepository.verifyAndConsumeState(state)) {
             authRepository.notifyAuthCode(code)
         }
     }

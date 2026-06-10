@@ -29,6 +29,20 @@ object GestureClassifier {
         return classifyHeadPose(pose, thresholds)
     }
 
+    /**
+     * Variante que recebe uma pose já corrigida pelo baseline neutro.
+     * Usada pelo [com.sac.acessibilidade.vision.GestureProcessor] em tempo real.
+     */
+    fun classifyWithPose(
+        pose: HeadPoseEstimator.HeadPose,
+        blendshapes: List<Category>?,
+        thresholds: CalibrationThresholds,
+    ): Gesture? {
+        val blinkGesture = classifyBlink(blendshapes, thresholds.blinkThreshold)
+        if (blinkGesture != null) return blinkGesture
+        return classifyHeadPose(pose, thresholds)
+    }
+
     private fun classifyBlink(
         blendshapes: List<Category>?,
         threshold: Float,

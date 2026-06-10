@@ -28,7 +28,10 @@ object HeadPoseEstimator {
         val roll: Float,
         val pitch: Float,
         val yaw: Float,
-    )
+    ) {
+        /** Subtrai o baseline neutro para obter ângulos relativos à posição de repouso. */
+        operator fun minus(other: HeadPose) = HeadPose(roll - other.roll, pitch - other.pitch, yaw - other.yaw)
+    }
 
     fun estimate(landmarks: List<NormalizedLandmark>): HeadPose? {
         if (landmarks.size < MIN_LANDMARKS) return null

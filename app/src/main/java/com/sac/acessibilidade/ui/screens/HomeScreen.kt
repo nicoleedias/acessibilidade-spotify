@@ -51,12 +51,12 @@ import com.sac.acessibilidade.ui.theme.TextSecondary
 
 @Composable
 fun HomeScreen(
-    userName: String = "João",
     uiState: HomeUiState = HomeUiState(),
     onStartTrackingClick: () -> Unit = {},
     onCalibrateClick: () -> Unit = {},
     onConfigureGesturesClick: () -> Unit = {},
 ) {
+    val userName = uiState.userName ?: "Usuário"
     Column(
         modifier =
             Modifier

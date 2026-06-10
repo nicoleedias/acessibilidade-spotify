@@ -60,6 +60,16 @@ class SpotifyTokenStore
             prefs.edit().remove(KEY_PKCE_VERIFIER).apply()
         }
 
+        fun saveOAuthState(state: String) {
+            prefs.edit().putString(KEY_OAUTH_STATE, state).apply()
+        }
+
+        fun consumeOAuthState(): String? {
+            val state = prefs.getString(KEY_OAUTH_STATE, null)
+            prefs.edit().remove(KEY_OAUTH_STATE).apply()
+            return state
+        }
+
         fun clearAll() {
             prefs.edit().clear().apply()
         }
@@ -69,5 +79,6 @@ class SpotifyTokenStore
             const val KEY_REFRESH_TOKEN = "refresh_token"
             const val KEY_EXPIRES_AT = "expires_at"
             const val KEY_PKCE_VERIFIER = "pkce_verifier"
+            const val KEY_OAUTH_STATE = "oauth_state"
         }
     }

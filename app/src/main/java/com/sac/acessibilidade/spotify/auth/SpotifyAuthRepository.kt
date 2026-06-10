@@ -27,5 +27,11 @@ interface SpotifyAuthRepository {
     /** Called by MainActivity when the redirect URI intent arrives. */
     fun notifyAuthCode(code: String)
 
+    /**
+     * Verifica o parâmetro `state` do redirect OAuth.
+     * Consome o valor armazenado — retorna false se ausente ou diferente.
+     */
+    fun verifyAndConsumeState(receivedState: String): Boolean
+
     fun isLoggedIn(): Boolean
 }

@@ -25,12 +25,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +55,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sac.acessibilidade.R
+import com.sac.acessibilidade.domain.gesture.Gesture
+import com.sac.acessibilidade.domain.gesture.NO_ACTION_LABEL
+import com.sac.acessibilidade.domain.gesture.SpotifyAction
+import com.sac.acessibilidade.domain.gesture.displayName
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.BorderDark
 import com.sac.acessibilidade.ui.theme.SacTheme
@@ -66,30 +69,21 @@ import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
 import com.sac.acessibilidade.ui.theme.TextSecondary
 
-private val defaultGestureMappings =
-    listOf(
-        GestureMappingUi("Inclinar para Direita", "Próxima Faixa", Icons.Default.KeyboardArrowRight),
-        GestureMappingUi("Inclinar para Esquerda", "Faixa Anterior", Icons.Default.KeyboardArrowLeft),
-        GestureMappingUi("Inclinar para Cima", "Tocar / Pausar", Icons.Default.KeyboardArrowUp),
-        GestureMappingUi("Piscar Olho Direito", "Aumentar Volume", Icons.Default.Face),
-        GestureMappingUi("Piscar Olho Esquerdo", "Diminuir Volume", Icons.Default.Face),
-    )
-
-private val availableActions =
-    listOf("Próxima Faixa", "Faixa Anterior", "Tocar / Pausar", "Aumentar Volume", "Diminuir Volume", "(Sem ação)")
+private val availableActions: List<String> =
+    SpotifyAction.entries.map { it.displayName() } + listOf(NO_ACTION_LABEL)
 
 @Composable
 fun GestureConfigScreen(
-    initialMappings: List<GestureMappingUi> = defaultGestureMappings,
-    onBack: () -> Unit = {},
-    onSaveClick: () -> Unit = {},
+    uiState: GestureConfigUiState,
+    onMappingChanged: (Gesture, String) -> Unit,
+    onSaveClick: () -> Unit,
+    onRestoreDefaults: () -> Unit,
+    onBack: () -> Unit,
 ) {
-    var mappings by remember { mutableStateOf(initialMappings) }
-
     Scaffold(
         containerColor = BackgroundDark,
-        topBar = { GestureConfigTopBar(onBack = onBack) },
-        bottomBar = { GestureConfigBottomBar(onSaveClick = onSaveClick) },
+        topBar = { GestureConfigTopBar(onBack = onBack, onRestoreDefaults = onRestoreDefaults) },
+        bottomBar = { GestureConfigBottomBar(onSaveClick = onSaveClick, isSaving = uiState.isSaving) },
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -110,12 +104,10 @@ fun GestureConfigScreen(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
-            itemsIndexed(mappings) { index, mapping ->
+            itemsIndexed(uiState.mappings) { _, mapping ->
                 GestureMappingCard(
                     mapping = mapping,
-                    onActionSelected = { action ->
-                        mappings = mappings.toMutableList().also { it[index] = it[index].copy(selectedAction = action) }
-                    },
+                    onActionSelected = { action -> onMappingChanged(mapping.gesture, action) },
                 )
             }
         }
@@ -123,7 +115,10 @@ fun GestureConfigScreen(
 }
 
 @Composable
-private fun GestureConfigTopBar(onBack: () -> Unit) {
+private fun GestureConfigTopBar(
+    onBack: () -> Unit,
+    onRestoreDefaults: () -> Unit,
+) {
     Row(
         modifier =
             Modifier
@@ -138,19 +133,30 @@ private fun GestureConfigTopBar(onBack: () -> Unit) {
             onClick = onBack,
             modifier = Modifier.size(40.dp).semantics { contentDescription = "Voltar" },
         ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = null, tint = TextPrimary)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = TextPrimary)
         }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             stringResource(R.string.gestures_title),
             style = MaterialTheme.typography.headlineSmall,
             color = TextPrimary,
+            modifier = Modifier.weight(1f),
         )
+        TextButton(onClick = onRestoreDefaults) {
+            Text(
+                text = stringResource(R.string.gestures_restore_defaults),
+                style = MaterialTheme.typography.labelMedium,
+                color = SpotifyGreen,
+            )
+        }
     }
 }
 
 @Composable
-private fun GestureConfigBottomBar(onSaveClick: () -> Unit) {
+private fun GestureConfigBottomBar(
+    onSaveClick: () -> Unit,
+    isSaving: Boolean,
+) {
     Box(
         modifier =
             Modifier
@@ -162,6 +168,7 @@ private fun GestureConfigBottomBar(onSaveClick: () -> Unit) {
         val saveLabel = stringResource(R.string.gestures_save)
         Button(
             onClick = onSaveClick,
+            enabled = !isSaving,
             modifier = Modifier.fillMaxWidth().height(56.dp).semantics { contentDescription = saveLabel },
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
@@ -207,7 +214,6 @@ private fun GestureMappingCard(
         }
 
         Column(modifier = Modifier.fillMaxWidth()) {
-            // Gatilho do dropdown
             Row(
                 modifier =
                     Modifier
@@ -238,7 +244,6 @@ private fun GestureMappingCard(
                 )
             }
 
-            // Lista de opções (expansão inline — sem popup flutuante)
             AnimatedVisibility(
                 visible = expanded,
                 enter = expandVertically(),
@@ -302,7 +307,22 @@ private fun GestureMappingCard(
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun GestureConfigScreenPreview() {
+    val previewMappings =
+        Gesture.entries.map { gesture ->
+            GestureMappingUi(
+                gesture = gesture,
+                gestureName = gesture.name,
+                selectedAction = NO_ACTION_LABEL,
+                icon = Icons.Default.Face,
+            )
+        }
     SacTheme {
-        GestureConfigScreen()
+        GestureConfigScreen(
+            uiState = GestureConfigUiState(mappings = previewMappings),
+            onMappingChanged = { _, _ -> },
+            onSaveClick = {},
+            onRestoreDefaults = {},
+            onBack = {},
+        )
     }
 }

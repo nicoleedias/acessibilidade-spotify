@@ -36,6 +36,8 @@ class SpotifyAuthRepositoryImpl
             val verifier = PkceUtils.generateVerifier()
             tokenStore.savePkceVerifier(verifier)
             val challenge = PkceUtils.generateChallenge(verifier)
+            val state = generateState()
+            tokenStore.saveOAuthState(state)
             return Uri.parse(SpotifyAuthConstants.AUTH_URL).buildUpon()
                 .appendQueryParameter("client_id", clientId)
                 .appendQueryParameter("response_type", "code")
@@ -43,7 +45,7 @@ class SpotifyAuthRepositoryImpl
                 .appendQueryParameter("code_challenge_method", "S256")
                 .appendQueryParameter("code_challenge", challenge)
                 .appendQueryParameter("scope", SpotifyAuthConstants.SCOPES.joinToString(" "))
-                .appendQueryParameter("state", generateState())
+                .appendQueryParameter("state", state)
                 .build()
         }
 
@@ -121,8 +123,12 @@ class SpotifyAuthRepositoryImpl
             }
         }
 
+        override fun verifyAndConsumeState(receivedState: String): Boolean {
+            val saved = tokenStore.consumeOAuthState() ?: return false
+            return saved == receivedState
+        }
+
         private fun generateState(): String {
-            // TODO: persistir state e verificar no callback para mitigar CSRF [UC01]
             val bytes = ByteArray(16)
             SecureRandom().nextBytes(bytes)
             return bytes.joinToString("") { "%02x".format(it) }

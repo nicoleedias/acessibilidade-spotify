@@ -13,4 +13,6 @@ data class CalibrationThresholds(
     val yawRightDeg: Float = 20f,
     val yawLeftDeg: Float = 20f,
     val blinkThreshold: Float = 0.5f,
+    /** Amplitude mínima de pitch (relativa ao baseline) para confirmar um NOD. */
+    val nodPitchAmplitudeDeg: Float = 12f,
 )

@@ -63,6 +63,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        arg("room.incremental", "true")
+    }
+
     kotlinOptions {
         jvmTarget = "17"
     }

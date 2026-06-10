@@ -3,10 +3,13 @@ package com.sac.acessibilidade.data.calibration
 import com.sac.acessibilidade.domain.gesture.CalibrationThresholds
 
 interface CalibrationRepository {
+    /** Persiste os thresholds medidos na sessão de calibração do usuário. */
+    fun saveThresholds(thresholds: CalibrationThresholds)
+
+    /** Atalho que salva os valores padrão (sem calibração real). */
     fun saveDefaultThresholds()
 
     fun isCalibrated(): Boolean
 
-    /** Retorna os thresholds calibrados pelo usuário (ou padrões se não calibrado). */
     fun getThresholds(): CalibrationThresholds
 }

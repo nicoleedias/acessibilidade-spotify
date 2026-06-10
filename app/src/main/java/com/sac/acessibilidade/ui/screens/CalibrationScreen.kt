@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedContent
@@ -32,11 +33,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -78,6 +79,7 @@ import com.sac.acessibilidade.ui.theme.SacTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
+import com.sac.acessibilidade.vision.CalibrationPoseAnalyzer
 import androidx.camera.core.Preview as CameraPreviewUseCase
 
 private val directionSteps =
@@ -86,12 +88,15 @@ private val directionSteps =
         CalibrationStep.TILT_LEFT,
         CalibrationStep.TILT_UP,
         CalibrationStep.TILT_DOWN,
+        CalibrationStep.TURN_RIGHT,
+        CalibrationStep.TURN_LEFT,
     )
 
 @Composable
 fun CalibrationScreen(
     uiState: CalibrationUiState = CalibrationUiState(),
-    onAdvance: () -> Unit = {},
+    poseAnalyzer: CalibrationPoseAnalyzer? = null,
+    onStartCalibration: () -> Unit = {},
     onConfirmPosition: () -> Unit = {},
     onConfirm: () -> Unit = {},
     onBack: () -> Unit = {},
@@ -116,7 +121,7 @@ fun CalibrationScreen(
         val ovalHeight = maxHeight * 0.56f
 
         if (hasCameraPermission) {
-            CameraPreview(modifier = Modifier.fillMaxSize())
+            CameraPreview(analyzer = poseAnalyzer, modifier = Modifier.fillMaxSize())
         } else {
             Box(
                 modifier =
@@ -160,7 +165,7 @@ fun CalibrationScreen(
                         .background(Color.Black.copy(alpha = 0.45f))
                         .semantics { contentDescription = "Voltar" },
             ) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = TextPrimary)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = TextPrimary)
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
@@ -192,16 +197,60 @@ fun CalibrationScreen(
             }
         }
 
-        // Painel inferior — sempre visível
+        // Indicador de ângulo ao vivo (visível apenas durante os passos de direção)
+        if (uiState.step in directionSteps && uiState.currentAngleDeg > 0.5f) {
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(top = 116.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                uiState.isHolding -> SpotifyGreen.copy(alpha = 0.85f)
+                                uiState.isAtLimit -> SpotifyGreen.copy(alpha = 0.55f)
+                                else -> Color.Black.copy(alpha = 0.5f)
+                            },
+                        )
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .semantics { contentDescription = "${uiState.currentAngleDeg.toInt()} graus" },
+            ) {
+                Text(
+                    text = "${uiState.currentAngleDeg.toInt()}°",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextPrimary,
+                )
+            }
+        }
+
+        // Aviso quando nenhum rosto é detectado (não conflita com o ângulo, que exige rosto)
+        if (!uiState.faceDetected) {
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(top = 116.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFC62828).copy(alpha = 0.85f))
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .semantics { contentDescription = "Rosto não detectado" },
+            ) {
+                Text(
+                    text = "Rosto não detectado",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextPrimary,
+                )
+            }
+        }
+
         CalibrationBottomPanel(
             uiState = uiState,
-            onAdvance = onAdvance,
+            onStartCalibration = onStartCalibration,
             onConfirmPosition = onConfirmPosition,
             onConfirm = onConfirm,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
         )
     }
 }
@@ -214,7 +263,7 @@ private fun FaceGuideOverlay(
     modifier: Modifier = Modifier,
 ) {
     val animatedProgress by animateFloatAsState(
-        targetValue = uiState.holdProgress,
+        targetValue = if (uiState.isCapturingNeutral) uiState.neutralProgress else uiState.holdProgress,
         animationSpec = tween(60),
         label = "hold_progress",
     )
@@ -271,15 +320,15 @@ private fun FaceGuideOverlay(
                 modifier = Modifier.align(Alignment.BottomCenter).size(52.dp),
             )
             DirectionArrow(
-                icon = Icons.Default.KeyboardArrowLeft,
-                contentDescription = "Incline para a esquerda",
-                isActive = uiState.step == CalibrationStep.TILT_LEFT,
+                icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Incline ou vire para a esquerda",
+                isActive = uiState.step == CalibrationStep.TILT_LEFT || uiState.step == CalibrationStep.TURN_LEFT,
                 modifier = Modifier.align(Alignment.CenterStart).size(52.dp),
             )
             DirectionArrow(
-                icon = Icons.Default.KeyboardArrowRight,
-                contentDescription = "Incline para a direita",
-                isActive = uiState.step == CalibrationStep.TILT_RIGHT,
+                icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Incline ou vire para a direita",
+                isActive = uiState.step == CalibrationStep.TILT_RIGHT || uiState.step == CalibrationStep.TURN_RIGHT,
                 modifier = Modifier.align(Alignment.CenterEnd).size(52.dp),
             )
         }
@@ -311,7 +360,7 @@ private fun DirectionArrow(
 @Composable
 private fun CalibrationBottomPanel(
     uiState: CalibrationUiState,
-    onAdvance: () -> Unit,
+    onStartCalibration: () -> Unit,
     onConfirmPosition: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
@@ -324,17 +373,45 @@ private fun CalibrationBottomPanel(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        uiState.retryMessage?.let { message ->
+            Text(
+                text = message,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color(0xFFFFB74D),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         when (uiState.step) {
             CalibrationStep.NEUTRAL -> {
                 Button(
-                    onClick = onAdvance,
+                    onClick = onStartCalibration,
+                    enabled = !uiState.isCapturingNeutral,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Começar calibração", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
+                    if (uiState.isCapturingNeutral) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = TextPrimary,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            "Capturando posição neutra...",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = TextPrimary,
+                        )
+                    } else {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = TextPrimary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Começar calibração",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = TextPrimary,
+                        )
+                    }
                 }
             }
 
@@ -342,11 +419,13 @@ private fun CalibrationBottomPanel(
             CalibrationStep.TILT_LEFT,
             CalibrationStep.TILT_UP,
             CalibrationStep.TILT_DOWN,
+            CalibrationStep.TURN_RIGHT,
+            CalibrationStep.TURN_LEFT,
             -> {
                 val stepIndex = directionSteps.indexOf(uiState.step) + 1
                 StepDots(current = uiState.step, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Text(
-                    text = "Passo $stepIndex de 4 · ${holdHintFor(uiState)}",
+                    text = "Passo $stepIndex de ${directionSteps.size} · ${holdHintFor(uiState)}",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
                     textAlign = TextAlign.Center,
@@ -354,7 +433,7 @@ private fun CalibrationBottomPanel(
                 )
                 Button(
                     onClick = onConfirmPosition,
-                    enabled = !uiState.isHolding,
+                    enabled = !uiState.isHolding && uiState.isAtLimit && uiState.faceDetected,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
@@ -423,7 +502,10 @@ private fun StepDots(
 }
 
 @Composable
-private fun CameraPreview(modifier: Modifier = Modifier) {
+private fun CameraPreview(
+    analyzer: CalibrationPoseAnalyzer?,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     AndroidView(
@@ -438,12 +520,28 @@ private fun CameraPreview(modifier: Modifier = Modifier) {
                             val provider = future.get()
                             val preview =
                                 CameraPreviewUseCase.Builder().build().also {
-                                    it.setSurfaceProvider(
-                                        surfaceProvider,
-                                    )
+                                    it.setSurfaceProvider(surfaceProvider)
                                 }
                             provider.unbindAll()
-                            provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_FRONT_CAMERA, preview)
+                            if (analyzer != null) {
+                                val imageAnalysis =
+                                    ImageAnalysis.Builder()
+                                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                        .build()
+                                        .also { it.setAnalyzer(ContextCompat.getMainExecutor(ctx), analyzer) }
+                                provider.bindToLifecycle(
+                                    lifecycleOwner,
+                                    CameraSelector.DEFAULT_FRONT_CAMERA,
+                                    preview,
+                                    imageAnalysis,
+                                )
+                            } else {
+                                provider.bindToLifecycle(
+                                    lifecycleOwner,
+                                    CameraSelector.DEFAULT_FRONT_CAMERA,
+                                    preview,
+                                )
+                            }
                         }
                     },
                     ContextCompat.getMainExecutor(ctx),
@@ -456,16 +554,22 @@ private fun CameraPreview(modifier: Modifier = Modifier) {
 
 private fun instructionFor(step: CalibrationStep): String =
     when (step) {
-        CalibrationStep.NEUTRAL -> "Posicione o rosto no oval e toque em Começar"
+        CalibrationStep.NEUTRAL -> "Olhe para a frente, fique parado e toque em Começar"
         CalibrationStep.TILT_RIGHT -> "Incline a cabeça para a DIREITA o máximo confortável →"
         CalibrationStep.TILT_LEFT -> "← Incline a cabeça para a ESQUERDA o máximo confortável"
         CalibrationStep.TILT_UP -> "↑ Incline a cabeça para CIMA o máximo confortável"
         CalibrationStep.TILT_DOWN -> "↓ Incline a cabeça para BAIXO o máximo confortável"
+        CalibrationStep.TURN_RIGHT -> "Vire o rosto para a DIREITA o máximo confortável →"
+        CalibrationStep.TURN_LEFT -> "← Vire o rosto para a ESQUERDA o máximo confortável"
         CalibrationStep.DONE -> "✓ Calibração concluída!"
     }
 
 private fun holdHintFor(uiState: CalibrationUiState): String =
-    if (uiState.isHolding) "Mantenha a posição..." else "Incline e confirme quando estiver pronto"
+    when {
+        uiState.isHolding -> "Mantenha a posição..."
+        uiState.isAtLimit -> "Pronto! Confirme a posição"
+        else -> "Vá até o limite confortável do movimento"
+    }
 
 @Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)

@@ -3,7 +3,9 @@ package com.sac.acessibilidade.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sac.acessibilidade.domain.gesture.Gesture
+import com.sac.acessibilidade.domain.gesture.GestureMappingRepository
 import com.sac.acessibilidade.domain.gesture.SpotifyAction
+import com.sac.acessibilidade.domain.gesture.displayName
 import com.sac.acessibilidade.spotify.player.SpotifyCommandRepository
 import com.sac.acessibilidade.spotify.player.SpotifyPlayerRepository
 import com.sac.acessibilidade.vision.GestureProcessor
@@ -12,6 +14,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -23,25 +27,29 @@ class PlayerAtivoViewModel
     constructor(
         private val playerRepository: SpotifyPlayerRepository,
         private val commandRepository: SpotifyCommandRepository,
+        private val gestureMappingRepository: GestureMappingRepository,
         val gestureProcessor: GestureProcessor,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(PlayerAtivoUiState())
         val uiState: StateFlow<PlayerAtivoUiState> = _uiState.asStateFlow()
 
-        // Mapeamento padrão gesto → ação (UC03: será lido do Room quando implementado)
-        private val defaultMapping =
-            mapOf(
-                Gesture.TILT_HEAD_RIGHT to SpotifyAction.VOLUME_UP,
-                Gesture.TILT_HEAD_LEFT to SpotifyAction.VOLUME_DOWN,
-                Gesture.TURN_FACE_RIGHT to SpotifyAction.NEXT_TRACK,
-                Gesture.TURN_FACE_LEFT to SpotifyAction.PREVIOUS_TRACK,
-                Gesture.BLINK_RIGHT_EYE to SpotifyAction.PLAY_PAUSE,
-            )
+        private var currentMapping: Map<Gesture, SpotifyAction?> = emptyMap()
 
         init {
             startPolling()
             gestureProcessor.initialize()
+            gestureProcessor.resetBaseline() // pose neutra recapturada a cada abertura da tela
+            observeMappings()
             collectGestures()
+        }
+
+        // ── Mapeamentos ──────────────────────────────────────────────────────
+
+        private fun observeMappings() {
+            gestureMappingRepository
+                .observeMappings()
+                .onEach { mapping -> currentMapping = mapping }
+                .launchIn(viewModelScope)
         }
 
         // ── Gestos ───────────────────────────────────────────────────────────
@@ -49,7 +57,7 @@ class PlayerAtivoViewModel
         private fun collectGestures() {
             viewModelScope.launch {
                 gestureProcessor.gestureFlow.collect { gesture ->
-                    val action = defaultMapping[gesture] ?: return@collect
+                    val action = currentMapping[gesture] ?: return@collect
                     showGestureFeedback(gesture, action)
                     executeAction(action)
                 }
@@ -181,25 +189,4 @@ class PlayerAtivoViewModel
             private const val VOLUME_STEP = 5
             private const val FEEDBACK_DURATION_MS = 2_000L
         }
-    }
-
-private fun Gesture.displayName(): String =
-    when (this) {
-        Gesture.TILT_HEAD_RIGHT -> "Inclinar Direita"
-        Gesture.TILT_HEAD_LEFT -> "Inclinar Esquerda"
-        Gesture.TILT_HEAD_UP -> "Inclinar Cima"
-        Gesture.TILT_HEAD_DOWN -> "Inclinar Baixo"
-        Gesture.TURN_FACE_RIGHT -> "Virar Direita"
-        Gesture.TURN_FACE_LEFT -> "Virar Esquerda"
-        Gesture.BLINK_RIGHT_EYE -> "Piscar Olho Direito"
-        Gesture.BLINK_LEFT_EYE -> "Piscar Olho Esquerdo"
-    }
-
-private fun SpotifyAction.displayName(): String =
-    when (this) {
-        SpotifyAction.PLAY_PAUSE -> "Play / Pause"
-        SpotifyAction.NEXT_TRACK -> "Próxima Faixa"
-        SpotifyAction.PREVIOUS_TRACK -> "Faixa Anterior"
-        SpotifyAction.VOLUME_UP -> "Volume +"
-        SpotifyAction.VOLUME_DOWN -> "Volume -"
     }

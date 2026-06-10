@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import com.sac.acessibilidade.ui.screens.CalibrationScreen
 import com.sac.acessibilidade.ui.screens.CalibrationViewModel
 import com.sac.acessibilidade.ui.screens.GestureConfigScreen
+import com.sac.acessibilidade.ui.screens.GestureConfigViewModel
 import com.sac.acessibilidade.ui.screens.HomeScreen
 import com.sac.acessibilidade.ui.screens.HomeViewModel
 import com.sac.acessibilidade.ui.screens.LoginScreen
@@ -77,7 +78,6 @@ fun SacNavHost(
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             HomeScreen(
                 uiState = uiState,
-                // TODO: passar userName real do perfil Spotify [UC01]
                 onStartTrackingClick = {
                     navController.navigate(Screen.PlayerAtivo.route)
                 },
@@ -95,7 +95,8 @@ fun SacNavHost(
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             CalibrationScreen(
                 uiState = uiState,
-                onAdvance = viewModel::advance,
+                poseAnalyzer = viewModel.poseAnalyzer,
+                onStartCalibration = viewModel::startNeutralCapture,
                 onConfirmPosition = viewModel::confirmPosition,
                 onConfirm = { navController.popBackStack() },
                 onBack = { navController.popBackStack() },
@@ -103,10 +104,14 @@ fun SacNavHost(
         }
 
         composable(Screen.GestureConfig.route) {
+            val viewModel: GestureConfigViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             GestureConfigScreen(
+                uiState = uiState,
+                onMappingChanged = viewModel::updateMapping,
+                onSaveClick = { viewModel.save { navController.popBackStack() } },
+                onRestoreDefaults = viewModel::restoreDefaults,
                 onBack = { navController.popBackStack() },
-                // TODO: onSaveClick deve chamar SaveGestureMappingsUseCase antes de popar [UC03]
-                onSaveClick = { navController.popBackStack() },
             )
         }
 

@@ -1,6 +1,7 @@
 package com.sac.acessibilidade.spotify.player
 
 import com.sac.acessibilidade.spotify.player.model.CurrentlyPlayingResponse
+import com.sac.acessibilidade.spotify.player.model.UserProfileResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -21,6 +22,18 @@ class SpotifyPlayerRepositoryImpl
                         response.code() == 204 -> null
                         response.isSuccessful -> response.body()
                         else -> throw IOException("HTTP ${response.code()}")
+                    }
+                }
+            }
+
+        override suspend fun getUserProfile(): Result<UserProfileResponse> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val response = api.getUserProfile()
+                    if (response.isSuccessful) {
+                        response.body() ?: throw IOException("Perfil vazio")
+                    } else {
+                        throw IOException("HTTP ${response.code()}")
                     }
                 }
             }

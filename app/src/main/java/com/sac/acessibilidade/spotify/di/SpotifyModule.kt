@@ -67,7 +67,11 @@ abstract class SpotifyModule {
         fun provideAuthenticatedOkHttpClient(
             @UnauthenticatedOkHttpClient base: OkHttpClient,
             authInterceptor: SpotifyAuthInterceptor,
-        ): OkHttpClient = base.newBuilder().addInterceptor(authInterceptor).build()
+        ): OkHttpClient =
+            base
+                .newBuilder()
+                .addInterceptor(authInterceptor)
+                .build()
 
         @Provides
         @Singleton
