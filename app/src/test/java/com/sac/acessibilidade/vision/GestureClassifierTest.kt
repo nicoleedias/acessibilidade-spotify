@@ -132,6 +132,36 @@ class GestureClassifierTest {
         assertEquals(Gesture.TILT_HEAD_DOWN, result)
     }
 
+    // ── Polaridade aprendida na calibração ───────────────────────────────────
+
+    @Test
+    fun `polaridade invertida classifica TILT_HEAD_RIGHT com roll negativo`() {
+        // Dispositivo cuja convenção produz roll negativo ao inclinar à direita:
+        // a calibração aprende rollSign = -1 e a classificação continua correta.
+        val inverted = thresholds.copy(rollSign = -1f)
+        val pose = HeadPoseEstimator.HeadPose(roll = -20f, pitch = 0f, yaw = 0f)
+
+        val result = GestureClassifier.classifyWithPose(pose, null, inverted)
+        assertEquals(Gesture.TILT_HEAD_RIGHT, result)
+    }
+
+    @Test
+    fun `polaridade invertida classifica TURN_FACE_LEFT com yaw positivo`() {
+        val inverted = thresholds.copy(yawSign = -1f)
+        val pose = HeadPoseEstimator.HeadPose(roll = 0f, pitch = 0f, yaw = 25f)
+
+        val result = GestureClassifier.classifyWithPose(pose, null, inverted)
+        assertEquals(Gesture.TURN_FACE_LEFT, result)
+    }
+
+    @Test
+    fun `polaridade padrao mantem comportamento original`() {
+        val pose = HeadPoseEstimator.HeadPose(roll = 20f, pitch = 0f, yaw = 0f)
+
+        val result = GestureClassifier.classifyWithPose(pose, null, thresholds)
+        assertEquals(Gesture.TILT_HEAD_RIGHT, result)
+    }
+
     // ── Piscadas ─────────────────────────────────────────────────────────────
 
     @Test

@@ -25,6 +25,9 @@ class CalibrationRepositoryImpl
                 .putFloat(KEY_YAW_LEFT, thresholds.yawLeftDeg)
                 .putFloat(KEY_BLINK, thresholds.blinkThreshold)
                 .putFloat(KEY_NOD_AMPLITUDE, thresholds.nodPitchAmplitudeDeg)
+                .putFloat(KEY_ROLL_SIGN, thresholds.rollSign)
+                .putFloat(KEY_PITCH_SIGN, thresholds.pitchSign)
+                .putFloat(KEY_YAW_SIGN, thresholds.yawSign)
                 .putBoolean(KEY_IS_CALIBRATED, true)
                 .apply()
         }
@@ -43,6 +46,9 @@ class CalibrationRepositoryImpl
                 yawLeftDeg = prefs.getFloat(KEY_YAW_LEFT, DEFAULT_YAW_DEG),
                 blinkThreshold = prefs.getFloat(KEY_BLINK, DEFAULT_BLINK),
                 nodPitchAmplitudeDeg = prefs.getFloat(KEY_NOD_AMPLITUDE, DEFAULT_NOD_AMPLITUDE),
+                rollSign = prefs.getFloat(KEY_ROLL_SIGN, DEFAULT_SIGN),
+                pitchSign = prefs.getFloat(KEY_PITCH_SIGN, DEFAULT_SIGN),
+                yawSign = prefs.getFloat(KEY_YAW_SIGN, DEFAULT_SIGN),
             )
 
         private companion object {
@@ -54,11 +60,15 @@ class CalibrationRepositoryImpl
             const val KEY_YAW_LEFT = "yaw_left_deg"
             const val KEY_BLINK = "blink_threshold"
             const val KEY_NOD_AMPLITUDE = "nod_amplitude_deg"
+            const val KEY_ROLL_SIGN = "roll_sign"
+            const val KEY_PITCH_SIGN = "pitch_sign"
+            const val KEY_YAW_SIGN = "yaw_sign"
             const val KEY_IS_CALIBRATED = "is_calibrated"
             const val DEFAULT_ROLL_DEG = 15f
             const val DEFAULT_PITCH_DEG = 12f
             const val DEFAULT_YAW_DEG = 20f
             const val DEFAULT_BLINK = 0.5f
             const val DEFAULT_NOD_AMPLITUDE = 12f
+            const val DEFAULT_SIGN = 1f
         }
     }

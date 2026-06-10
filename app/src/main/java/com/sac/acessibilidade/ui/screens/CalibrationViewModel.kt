@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.abs
-import kotlin.math.max
 
 @HiltViewModel
 class CalibrationViewModel
@@ -40,13 +39,15 @@ class CalibrationViewModel
         private val neutralSamples = ArrayDeque<HeadPose>(NEUTRAL_STEPS)
         private var neutral: HeadPose? = null
 
-        // ── Picos medidos por eixo, relativos ao neutro ────────────────────────
-        private var peakRollRight = 0f
-        private var peakRollLeft = 0f
-        private var peakPitchUp = 0f
-        private var peakPitchDown = 0f
-        private var peakYawRight = 0f
-        private var peakYawLeft = 0f
+        // ── Picos COM SINAL por passo, relativos ao neutro ─────────────────────
+        // O sinal é preservado para que o CalibrationThresholdCalculator aprenda a
+        // polaridade real de cada eixo neste dispositivo (imune a espelhamento).
+        private var peakTiltRight = 0f
+        private var peakTiltLeft = 0f
+        private var peakTiltUp = 0f
+        private var peakTiltDown = 0f
+        private var peakTurnRight = 0f
+        private var peakTurnLeft = 0f
 
         init {
             poseAnalyzer.initialize()
@@ -205,27 +206,29 @@ class CalibrationViewModel
 
         private fun measuredPeaks() =
             CalibrationThresholdCalculator.Peaks(
-                rollRightDeg = peakRollRight,
-                rollLeftDeg = peakRollLeft,
-                pitchUpDeg = peakPitchUp,
-                pitchDownDeg = peakPitchDown,
-                yawRightDeg = peakYawRight,
-                yawLeftDeg = peakYawLeft,
+                tiltRight = peakTiltRight,
+                tiltLeft = peakTiltLeft,
+                tiltUp = peakTiltUp,
+                tiltDown = peakTiltDown,
+                turnRight = peakTurnRight,
+                turnLeft = peakTurnLeft,
             )
 
         // ── Helpers de medição ─────────────────────────────────────────────────
 
+        /**
+         * Ângulo exibido/medido: valor ABSOLUTO do eixo relevante ao passo.
+         * A direção não importa aqui — a polaridade é aprendida pelo sinal do pico,
+         * então qualquer convenção de câmera (espelhada ou não) funciona.
+         */
         private fun angleForStep(
             step: CalibrationStep,
             pose: HeadPose,
         ): Float =
             when (step) {
-                CalibrationStep.TILT_RIGHT -> max(0f, pose.roll)
-                CalibrationStep.TILT_LEFT -> max(0f, -pose.roll)
-                CalibrationStep.TILT_UP -> max(0f, -pose.pitch)
-                CalibrationStep.TILT_DOWN -> max(0f, pose.pitch)
-                CalibrationStep.TURN_RIGHT -> max(0f, pose.yaw)
-                CalibrationStep.TURN_LEFT -> max(0f, -pose.yaw)
+                CalibrationStep.TILT_RIGHT, CalibrationStep.TILT_LEFT -> abs(pose.roll)
+                CalibrationStep.TILT_UP, CalibrationStep.TILT_DOWN -> abs(pose.pitch)
+                CalibrationStep.TURN_RIGHT, CalibrationStep.TURN_LEFT -> abs(pose.yaw)
                 else -> 0f
             }
 
@@ -234,24 +237,30 @@ class CalibrationViewModel
             pose: HeadPose,
         ) {
             when (step) {
-                CalibrationStep.TILT_RIGHT -> peakRollRight = max(peakRollRight, pose.roll)
-                CalibrationStep.TILT_LEFT -> peakRollLeft = max(peakRollLeft, abs(pose.roll))
-                CalibrationStep.TILT_UP -> peakPitchUp = max(peakPitchUp, abs(pose.pitch))
-                CalibrationStep.TILT_DOWN -> peakPitchDown = max(peakPitchDown, pose.pitch)
-                CalibrationStep.TURN_RIGHT -> peakYawRight = max(peakYawRight, pose.yaw)
-                CalibrationStep.TURN_LEFT -> peakYawLeft = max(peakYawLeft, abs(pose.yaw))
+                CalibrationStep.TILT_RIGHT -> peakTiltRight = maxAbs(peakTiltRight, pose.roll)
+                CalibrationStep.TILT_LEFT -> peakTiltLeft = maxAbs(peakTiltLeft, pose.roll)
+                CalibrationStep.TILT_UP -> peakTiltUp = maxAbs(peakTiltUp, pose.pitch)
+                CalibrationStep.TILT_DOWN -> peakTiltDown = maxAbs(peakTiltDown, pose.pitch)
+                CalibrationStep.TURN_RIGHT -> peakTurnRight = maxAbs(peakTurnRight, pose.yaw)
+                CalibrationStep.TURN_LEFT -> peakTurnLeft = maxAbs(peakTurnLeft, pose.yaw)
                 else -> Unit
             }
         }
 
+        /** Mantém o valor de maior magnitude, preservando o sinal. */
+        private fun maxAbs(
+            current: Float,
+            candidate: Float,
+        ): Float = if (abs(candidate) > abs(current)) candidate else current
+
         private fun resetPeak(step: CalibrationStep) {
             when (step) {
-                CalibrationStep.TILT_RIGHT -> peakRollRight = 0f
-                CalibrationStep.TILT_LEFT -> peakRollLeft = 0f
-                CalibrationStep.TILT_UP -> peakPitchUp = 0f
-                CalibrationStep.TILT_DOWN -> peakPitchDown = 0f
-                CalibrationStep.TURN_RIGHT -> peakYawRight = 0f
-                CalibrationStep.TURN_LEFT -> peakYawLeft = 0f
+                CalibrationStep.TILT_RIGHT -> peakTiltRight = 0f
+                CalibrationStep.TILT_LEFT -> peakTiltLeft = 0f
+                CalibrationStep.TILT_UP -> peakTiltUp = 0f
+                CalibrationStep.TILT_DOWN -> peakTiltDown = 0f
+                CalibrationStep.TURN_RIGHT -> peakTurnRight = 0f
+                CalibrationStep.TURN_LEFT -> peakTurnLeft = 0f
                 else -> Unit
             }
         }

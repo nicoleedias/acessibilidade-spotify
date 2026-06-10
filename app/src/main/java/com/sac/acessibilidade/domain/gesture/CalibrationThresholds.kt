@@ -15,4 +15,14 @@ data class CalibrationThresholds(
     val blinkThreshold: Float = 0.5f,
     /** Amplitude mínima de pitch (relativa ao baseline) para confirmar um NOD. */
     val nodPitchAmplitudeDeg: Float = 12f,
+    /**
+     * Polaridade de cada eixo APRENDIDA na calibração (+1 ou -1).
+     * Em vez de assumir a convenção de sinais da câmera/estimador (que varia com
+     * espelhamento e rotação do sensor), a calibração observa o sinal real produzido
+     * quando o usuário se move na direção pedida. Elimina por construção qualquer
+     * inversão direita/esquerda, em qualquer dispositivo.
+     */
+    val rollSign: Float = 1f,
+    val pitchSign: Float = 1f,
+    val yawSign: Float = 1f,
 )

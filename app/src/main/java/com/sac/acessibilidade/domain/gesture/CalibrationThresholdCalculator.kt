@@ -1,5 +1,6 @@
 package com.sac.acessibilidade.domain.gesture
 
+import kotlin.math.abs
 import kotlin.math.min
 
 /**
@@ -9,6 +10,12 @@ import kotlin.math.min
  * Sem dependências Android — testável com dados sintéticos.
  *
  * Regras de projeto (justificáveis na defesa do TCC):
+ * - **Polaridade aprendida**: os picos chegam COM SINAL, exatamente como o estimador os
+ *   produziu enquanto o usuário se movia na direção pedida. O sinal do pico do passo
+ *   "direita"/"baixo" define a polaridade do eixo ([CalibrationThresholds.rollSign],
+ *   [CalibrationThresholds.pitchSign], [CalibrationThresholds.yawSign]). Assim a
+ *   classificação fica agnóstica à convenção da câmera (espelhamento, rotação do
+ *   sensor) — nenhuma direção é assumida em código.
  * - Usa [THRESHOLD_RATIO] do pico medido: o usuário não precisa repetir a amplitude
  *   máxima a cada gesto, o que melhora a usabilidade — essencial para mobilidade reduzida.
  * - Aplica mínimos de segurança por eixo para evitar falso-positivo em repouso/jitter.
@@ -18,33 +25,41 @@ import kotlin.math.min
  * Todos os picos recebidos já devem ser **relativos à pose neutra** do usuário.
  */
 object CalibrationThresholdCalculator {
+    /** Picos COM SINAL medidos em cada passo da calibração. */
     data class Peaks(
-        val rollRightDeg: Float,
-        val rollLeftDeg: Float,
-        val pitchUpDeg: Float,
-        val pitchDownDeg: Float,
-        val yawRightDeg: Float,
-        val yawLeftDeg: Float,
+        val tiltRight: Float,
+        val tiltLeft: Float,
+        val tiltUp: Float,
+        val tiltDown: Float,
+        val turnRight: Float,
+        val turnLeft: Float,
     )
 
     fun build(peaks: Peaks): CalibrationThresholds {
-        val pitchRange = min(peaks.pitchUpDeg, peaks.pitchDownDeg)
+        val pitchRange = min(abs(peaks.tiltUp), abs(peaks.tiltDown))
         val nodAmplitude = (pitchRange * NOD_RATIO).coerceIn(MIN_NOD_DEG, MAX_NOD_DEG)
         return CalibrationThresholds(
-            rollRightDeg = threshold(peaks.rollRightDeg, MIN_ROLL_DEG),
-            rollLeftDeg = threshold(peaks.rollLeftDeg, MIN_ROLL_DEG),
-            pitchUpDeg = threshold(peaks.pitchUpDeg, MIN_PITCH_DEG),
-            pitchDownDeg = threshold(peaks.pitchDownDeg, MIN_PITCH_DEG),
-            yawRightDeg = threshold(peaks.yawRightDeg, MIN_YAW_DEG),
-            yawLeftDeg = threshold(peaks.yawLeftDeg, MIN_YAW_DEG),
+            rollRightDeg = threshold(peaks.tiltRight, MIN_ROLL_DEG),
+            rollLeftDeg = threshold(peaks.tiltLeft, MIN_ROLL_DEG),
+            pitchUpDeg = threshold(peaks.tiltUp, MIN_PITCH_DEG),
+            pitchDownDeg = threshold(peaks.tiltDown, MIN_PITCH_DEG),
+            yawRightDeg = threshold(peaks.turnRight, MIN_YAW_DEG),
+            yawLeftDeg = threshold(peaks.turnLeft, MIN_YAW_DEG),
             nodPitchAmplitudeDeg = nodAmplitude,
+            // Polaridade: sinal observado no passo da direção positiva de cada eixo
+            // (direita para roll/yaw, baixo para pitch — convenção do classificador).
+            rollSign = signOf(peaks.tiltRight),
+            pitchSign = signOf(peaks.tiltDown),
+            yawSign = signOf(peaks.turnRight),
         )
     }
 
     private fun threshold(
-        peak: Float,
+        signedPeak: Float,
         minimum: Float,
-    ): Float = (peak * THRESHOLD_RATIO).coerceAtLeast(minimum)
+    ): Float = (abs(signedPeak) * THRESHOLD_RATIO).coerceAtLeast(minimum)
+
+    private fun signOf(value: Float): Float = if (value < 0f) -1f else 1f
 
     /** Amplitude mínima (relativa ao neutro) que conta como "usuário chegou ao limite". */
     fun entryMinDegFor(axis: Axis): Float =

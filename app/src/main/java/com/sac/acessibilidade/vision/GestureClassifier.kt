@@ -61,14 +61,21 @@ object GestureClassifier {
     private fun classifyHeadPose(
         pose: HeadPoseEstimator.HeadPose,
         t: CalibrationThresholds,
-    ): Gesture? =
-        when {
-            pose.roll > t.rollRightDeg -> Gesture.TILT_HEAD_RIGHT
-            pose.roll < -t.rollLeftDeg -> Gesture.TILT_HEAD_LEFT
-            pose.pitch < -t.pitchUpDeg -> Gesture.TILT_HEAD_UP
-            pose.pitch > t.pitchDownDeg -> Gesture.TILT_HEAD_DOWN
-            pose.yaw > t.yawRightDeg -> Gesture.TURN_FACE_RIGHT
-            pose.yaw < -t.yawLeftDeg -> Gesture.TURN_FACE_LEFT
+    ): Gesture? {
+        // Normaliza cada eixo pela polaridade APRENDIDA na calibração — a direção
+        // não é assumida pelo código, é a que o usuário de fato produziu quando
+        // a calibração pediu "direita"/"baixo". Imune a espelhamento de câmera.
+        val roll = pose.roll * t.rollSign
+        val pitch = pose.pitch * t.pitchSign
+        val yaw = pose.yaw * t.yawSign
+        return when {
+            roll > t.rollRightDeg -> Gesture.TILT_HEAD_RIGHT
+            roll < -t.rollLeftDeg -> Gesture.TILT_HEAD_LEFT
+            pitch < -t.pitchUpDeg -> Gesture.TILT_HEAD_UP
+            pitch > t.pitchDownDeg -> Gesture.TILT_HEAD_DOWN
+            yaw > t.yawRightDeg -> Gesture.TURN_FACE_RIGHT
+            yaw < -t.yawLeftDeg -> Gesture.TURN_FACE_LEFT
             else -> null
         }
+    }
 }
