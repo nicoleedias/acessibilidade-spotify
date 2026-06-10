@@ -33,6 +33,7 @@ class HeadGestureStabilizerTest {
                 stableRangeDeg = 3f,
                 releaseRatio = 0.5f,
                 driftAlpha = 0.03f,
+                maxWarmupFrames = 8,
             )
     }
 
@@ -64,12 +65,21 @@ class HeadGestureStabilizerTest {
     }
 
     @Test
-    fun `poses instaveis nao fixam o baseline`() {
+    fun `poses instaveis nao fixam o baseline de imediato`() {
         feed(pose(roll = 0f))
         feed(pose(roll = 20f))
         feed(pose(roll = 0f))
         val result = feed(pose(roll = 0f))
-        assertNull("variação alta não deve fixar baseline", result.relativePose)
+        assertNull("variação alta não deve fixar baseline cedo", result.relativePose)
+    }
+
+    @Test
+    fun `fallback fixa o baseline mesmo sem cabeca parada`() {
+        // Alterna valores para nunca satisfazer a estabilidade (range > 3)
+        repeat(8) { i -> feed(pose(roll = if (i % 2 == 0) 0f else 20f)) }
+        // Após maxWarmupFrames (8) o baseline trava à força
+        val result = feed(pose())
+        assertNotNull("fallback deve garantir baseline operacional", result.relativePose)
     }
 
     @Test

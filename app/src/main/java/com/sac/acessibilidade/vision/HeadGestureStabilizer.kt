@@ -13,9 +13,11 @@ import kotlin.math.min
  *
  * Três mecanismos reduzem falsos positivos e gestos perdidos:
  *
- * 1. **Baseline estável** — a pose neutra só é fixada quando a cabeça permanece parada
- *    por [baselineStableFrames] frames (faixa de variação < [stableRangeDeg]). Evita
- *    "congelar" uma pose já em movimento como referência.
+ * 1. **Baseline estável** — a pose neutra é fixada quando a cabeça permanece parada
+ *    por [baselineStableFrames] frames (faixa de variação < [stableRangeDeg]), evitando
+ *    "congelar" uma pose em movimento. Há um fallback: após [maxWarmupFrames] frames o
+ *    baseline trava de qualquer forma (média da janela), garantindo que o sistema sempre
+ *    fique operacional mesmo que a cabeça nunca fique perfeitamente imóvel.
  * 2. **Baseline adaptativo** — enquanto o usuário está próximo do neutro, a referência é
  *    puxada lentamente (EMA com [driftAlpha]) para a pose atual, corrigindo mudanças de
  *    postura ao longo da sessão.
@@ -32,6 +34,7 @@ class HeadGestureStabilizer(
     private val stableRangeDeg: Float = DEFAULT_STABLE_RANGE_DEG,
     private val releaseRatio: Float = DEFAULT_RELEASE_RATIO,
     private val driftAlpha: Float = DEFAULT_DRIFT_ALPHA,
+    private val maxWarmupFrames: Int = DEFAULT_MAX_WARMUP_FRAMES,
 ) {
     /** Resultado de um frame: pose relativa ao neutro (null até o baseline ficar pronto). */
     data class Result(
@@ -41,6 +44,7 @@ class HeadGestureStabilizer(
 
     private val baselineWindow = ArrayDeque<HeadPose>(baselineStableFrames)
     private var baseline: HeadPose? = null
+    private var warmupFrames = 0
 
     private var sustained: Gesture? = null
     private var sustainCount = 0
@@ -49,6 +53,7 @@ class HeadGestureStabilizer(
     fun reset() {
         baselineWindow.clear()
         baseline = null
+        warmupFrames = 0
         sustained = null
         sustainCount = 0
         armed = true
@@ -103,11 +108,20 @@ class HeadGestureStabilizer(
     }
 
     private fun captureBaseline(raw: HeadPose) {
+        warmupFrames++
         baselineWindow.addLast(raw)
         while (baselineWindow.size > baselineStableFrames) baselineWindow.removeFirst()
-        if (baselineWindow.size == baselineStableFrames && baselineWindow.isStable(stableRangeDeg)) {
+
+        val full = baselineWindow.size == baselineStableFrames
+        val stableLock = full && baselineWindow.isStable(stableRangeDeg)
+        // Fallback: garante que o baseline trave mesmo se a cabeça nunca ficar
+        // perfeitamente parada (o estimador geométrico tem ruído). Sem isso, nenhum
+        // gesto dispararia. Após maxWarmupFrames, trava com a média da janela.
+        val forcedLock = warmupFrames >= maxWarmupFrames && baselineWindow.isNotEmpty()
+        if (stableLock || forcedLock) {
             baseline = baselineWindow.average()
             baselineWindow.clear()
+            warmupFrames = 0
             armed = true
         }
     }
@@ -151,10 +165,11 @@ class HeadGestureStabilizer(
         )
 
     companion object {
-        private const val DEFAULT_SUSTAIN_FRAMES = 3
-        private const val DEFAULT_BASELINE_FRAMES = 12
-        private const val DEFAULT_STABLE_RANGE_DEG = 3f
+        private const val DEFAULT_SUSTAIN_FRAMES = 2
+        private const val DEFAULT_BASELINE_FRAMES = 10
+        private const val DEFAULT_STABLE_RANGE_DEG = 6f
         private const val DEFAULT_RELEASE_RATIO = 0.5f
         private const val DEFAULT_DRIFT_ALPHA = 0.03f
+        private const val DEFAULT_MAX_WARMUP_FRAMES = 30
     }
 }
