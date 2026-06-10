@@ -3,10 +3,12 @@ package com.sac.acessibilidade.vision
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.abs
 
 class HeadPoseEstimatorTest {
     private fun landmark(
@@ -99,5 +101,88 @@ class HeadPoseEstimatorTest {
         val pose = HeadPoseEstimator.estimate(face)
         assertNotNull(pose)
         assertTrue("Pitch deveria ser positivo, foi ${pose!!.pitch}", pose.pitch > 0f)
+    }
+
+    // ── Matriz de transformação facial (pose 3D real) ────────────────────────
+    // A polaridade não é verificada (é aprendida na calibração) — os testes
+    // garantem MAGNITUDE correta e DESACOPLAMENTO entre os eixos.
+
+    private val tol = 0.5f
+
+    private fun identityMatrix(): FloatArray {
+        val m = FloatArray(16)
+        m[0] = 1f
+        m[5] = 1f
+        m[10] = 1f
+        m[15] = 1f
+        return m
+    }
+
+    private fun rotationX(deg: Float): FloatArray {
+        val r = Math.toRadians(deg.toDouble())
+        val c = Math.cos(r).toFloat()
+        val s = Math.sin(r).toFloat()
+        return identityMatrix().also {
+            it[5] = c
+            it[6] = s
+            it[9] = -s
+            it[10] = c
+        }
+    }
+
+    private fun rotationY(deg: Float): FloatArray {
+        val r = Math.toRadians(deg.toDouble())
+        val c = Math.cos(r).toFloat()
+        val s = Math.sin(r).toFloat()
+        return identityMatrix().also {
+            it[0] = c
+            it[2] = s
+            it[8] = -s
+            it[10] = c
+        }
+    }
+
+    private fun rotationZ(deg: Float): FloatArray {
+        val r = Math.toRadians(deg.toDouble())
+        val c = Math.cos(r).toFloat()
+        val s = Math.sin(r).toFloat()
+        return identityMatrix().also {
+            it[0] = c
+            it[1] = s
+            it[4] = -s
+            it[5] = c
+        }
+    }
+
+    @Test
+    fun `matriz identidade produz pose neutra`() {
+        val pose = HeadPoseEstimator.fromTransformationMatrix(identityMatrix())
+        assertEquals(0f, pose.roll, tol)
+        assertEquals(0f, pose.pitch, tol)
+        assertEquals(0f, pose.yaw, tol)
+    }
+
+    @Test
+    fun `rotacao pura em Y produz apenas yaw com magnitude correta`() {
+        val pose = HeadPoseEstimator.fromTransformationMatrix(rotationY(30f))
+        assertEquals(30f, abs(pose.yaw), tol)
+        assertEquals(0f, pose.roll, tol)
+        assertEquals(0f, pose.pitch, tol)
+    }
+
+    @Test
+    fun `rotacao pura em X produz apenas pitch com magnitude correta`() {
+        val pose = HeadPoseEstimator.fromTransformationMatrix(rotationX(20f))
+        assertEquals(20f, abs(pose.pitch), tol)
+        assertEquals(0f, pose.roll, tol)
+        assertEquals(0f, pose.yaw, tol)
+    }
+
+    @Test
+    fun `rotacao pura em Z produz apenas roll com magnitude correta`() {
+        val pose = HeadPoseEstimator.fromTransformationMatrix(rotationZ(25f))
+        assertEquals(25f, abs(pose.roll), tol)
+        assertEquals(0f, pose.pitch, tol)
+        assertEquals(0f, pose.yaw, tol)
     }
 }

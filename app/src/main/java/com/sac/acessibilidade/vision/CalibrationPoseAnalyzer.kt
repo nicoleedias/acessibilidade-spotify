@@ -43,13 +43,11 @@ class CalibrationPoseAnalyzer(private val context: Context) : ImageAnalysis.Anal
                     .setMinFacePresenceConfidence(0.5f)
                     .setMinTrackingConfidence(0.5f)
                     .setOutputFaceBlendshapes(false)
+                    .setOutputFacialTransformationMatrixes(true)
                     .setResultListener { result, _ ->
-                        val landmarks =
-                            result.faceLandmarks().firstOrNull() ?: run {
-                                _poseFlow.value = null
-                                return@setResultListener
-                            }
-                        _poseFlow.value = HeadPoseEstimator.estimate(landmarks)
+                        // Mesma fonte de pose do GestureProcessor — calibração e runtime
+                        // DEVEM medir com o mesmo estimador (matriz 3D com fallback 2D)
+                        _poseFlow.value = HeadPoseEstimator.fromResult(result)
                     }
                     .setErrorListener { _ -> _poseFlow.value = null }
                     .build()

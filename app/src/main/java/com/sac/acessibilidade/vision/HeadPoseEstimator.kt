@@ -1,17 +1,23 @@
 package com.sac.acessibilidade.vision
 
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
+import kotlin.math.asin
 import kotlin.math.atan2
 
 /**
- * Estima a pose da cabeça a partir dos landmarks do MediaPipe Face Mesh (478 pts).
+ * Estima a pose da cabeça (roll/pitch/yaw, em graus) a partir do MediaPipe Face Mesh.
  *
- * Retorna ângulos em graus em escala geométrica normalizada:
- *  - roll  : inclinação lateral (+ = lado direito desce, câmera frontal espelhada)
- *  - pitch : inclinação frente/trás (+ = queixo desce, - = queixo sobe)
- *  - yaw   : rotação horizontal (+ = nariz para direita da imagem)
+ * Duas fontes, em ordem de preferência:
+ * 1. **Matriz de transformação facial** ([fromTransformationMatrix]) — pose 3D real do
+ *    solvePnP interno do MediaPipe contra o modelo facial canônico. Eixos desacoplados:
+ *    virar o rosto (yaw) e levantar o queixo (pitch) produzem rotação real mesmo quando
+ *    o deslocamento 2D do nariz é pequeno (movimento em direção à câmera).
+ * 2. **Geometria 2D dos landmarks** ([estimate]) — fallback quando a matriz não está
+ *    disponível.
  *
- * Valores aproximados ±45° representam ~máximo confortável para um usuário adulto.
+ * A convenção de sinais NÃO precisa ser consistente entre dispositivos: a polaridade
+ * de cada eixo é aprendida na calibração (UC02) e aplicada pelo classificador.
  * Não usa Context — testável com dados sintéticos.
  */
 object HeadPoseEstimator {
@@ -23,6 +29,7 @@ object HeadPoseEstimator {
     private const val IDX_FOREHEAD = 10
     private const val IDX_CHIN = 152
     private const val MIN_LANDMARKS = 478
+    private const val MATRIX_SIZE = 16
 
     data class HeadPose(
         val roll: Float,
@@ -31,6 +38,32 @@ object HeadPoseEstimator {
     ) {
         /** Subtrai o baseline neutro para obter ângulos relativos à posição de repouso. */
         operator fun minus(other: HeadPose) = HeadPose(roll - other.roll, pitch - other.pitch, yaw - other.yaw)
+    }
+
+    /**
+     * Extrai a pose do resultado do FaceLandmarker, preferindo a matriz de
+     * transformação facial e caindo para a geometria 2D quando ausente.
+     */
+    fun fromResult(result: FaceLandmarkerResult): HeadPose? {
+        val matrices = result.facialTransformationMatrixes()
+        if (matrices.isPresent) {
+            val matrix = matrices.get().firstOrNull()
+            if (matrix != null && matrix.size >= MATRIX_SIZE) return fromTransformationMatrix(matrix)
+        }
+        val landmarks = result.faceLandmarks().firstOrNull() ?: return null
+        return estimate(landmarks)
+    }
+
+    /**
+     * Decompõe a rotação de uma matriz 4x4 column-major (canônico → câmera) em
+     * ângulos de Euler (R = Rz·Ry·Rx). Os valores são graus REAIS de rotação da
+     * cabeça — virar 30° produz ~30°, independentemente da projeção 2D.
+     */
+    fun fromTransformationMatrix(matrix: FloatArray): HeadPose {
+        val yaw = Math.toDegrees(asin((-matrix[2]).coerceIn(-1f, 1f).toDouble())).toFloat()
+        val pitch = Math.toDegrees(atan2(matrix[6].toDouble(), matrix[10].toDouble())).toFloat()
+        val roll = Math.toDegrees(atan2(matrix[1].toDouble(), matrix[0].toDouble())).toFloat()
+        return HeadPose(roll = roll, pitch = pitch, yaw = yaw)
     }
 
     fun estimate(landmarks: List<NormalizedLandmark>): HeadPose? {

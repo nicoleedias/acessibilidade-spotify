@@ -63,6 +63,7 @@ class GestureProcessor
                         .setMinFacePresenceConfidence(0.5f)
                         .setMinTrackingConfidence(0.5f)
                         .setOutputFaceBlendshapes(true)
+                        .setOutputFacialTransformationMatrixes(true)
                         .setResultListener { result, _ -> onResult(result) }
                         .setErrorListener { _ -> }
                         .build()
@@ -97,9 +98,8 @@ class GestureProcessor
         private fun onResult(result: FaceLandmarkerResult) {
             if (result.faceLandmarks().isEmpty()) return
             val now = SystemClock.uptimeMillis()
-            val landmarks = result.faceLandmarks()[0]
             val thresholds = calibrationRepository.getThresholds()
-            val detected = detectGesture(result, landmarks, thresholds, now)
+            val detected = detectGesture(result, thresholds, now)
             if (detected != null) {
                 lastGestureMs = now
                 _gestureFlow.tryEmit(detected)
@@ -108,11 +108,11 @@ class GestureProcessor
 
         private fun detectGesture(
             result: FaceLandmarkerResult,
-            landmarks: List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark>,
             thresholds: CalibrationThresholds,
             now: Long,
         ): Gesture? {
-            val rawPose = HeadPoseEstimator.estimate(landmarks) ?: return null
+            // Matriz de transformação 3D quando disponível (yaw/pitch reais), senão geometria 2D
+            val rawPose = HeadPoseEstimator.fromResult(result) ?: return null
             val state = stabilizer.update(rawPose, thresholds)
             val relative = state.relativePose ?: return null // baseline ainda aquecendo
             // NOD alimenta sempre (mantém buffer contínuo), mesmo durante o cooldown
