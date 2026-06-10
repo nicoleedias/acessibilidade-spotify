@@ -77,10 +77,11 @@ class HeadPoseEstimatorTest {
     }
 
     @Test
-    fun `yaw positivo quando nariz esta a direita do centro do rosto`() {
+    fun `yaw positivo quando o rosto vira para a direita do usuario`() {
         val face = neutralFace()
-        // Nariz deslocado para direita da imagem
-        face[4] = landmark(0.6f, 0.5f)
+        // Câmera frontal espelhada: virar o rosto para a direita desloca o nariz
+        // para a ESQUERDA da imagem. O estimador compensa o espelho → yaw positivo.
+        face[4] = landmark(0.4f, 0.5f)
 
         val pose = HeadPoseEstimator.estimate(face)
         assertNotNull(pose)

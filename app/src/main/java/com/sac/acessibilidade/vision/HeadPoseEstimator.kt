@@ -56,7 +56,10 @@ object HeadPoseEstimator {
         val yaw =
             if (faceWidth > 0f) {
                 val faceCenterX = (leftFace.x() + rightFace.x()) / 2f
-                ((noseTip.x() - faceCenterX) / (faceWidth * 0.5f)) * 45f
+                // Câmera frontal espelhada: virar o rosto para a direita desloca o nariz
+                // para a ESQUERDA da imagem. Compensamos o espelho para que "virar à
+                // direita" produza yaw positivo, alinhando com TURN_FACE_RIGHT.
+                ((faceCenterX - noseTip.x()) / (faceWidth * 0.5f)) * 45f
             } else {
                 0f
             }

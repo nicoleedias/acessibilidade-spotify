@@ -98,17 +98,18 @@ class GestureClassifierTest {
     }
 
     @Test
-    fun `detecta TURN_FACE_RIGHT quando nariz esta muito a direita`() {
-        // Nariz deslocado: yaw positivo alto
-        neutralLandmarks[4] = mockLandmark(0.75f, 0.5f)
+    fun `detecta TURN_FACE_RIGHT quando o rosto vira para a direita`() {
+        // Câmera espelhada: virar à direita desloca o nariz para a ESQUERDA da imagem
+        neutralLandmarks[4] = mockLandmark(0.25f, 0.5f)
 
         val result = GestureClassifier.classify(neutralLandmarks, null, thresholds)
         assertEquals(Gesture.TURN_FACE_RIGHT, result)
     }
 
     @Test
-    fun `detecta TURN_FACE_LEFT quando nariz esta muito a esquerda`() {
-        neutralLandmarks[4] = mockLandmark(0.25f, 0.5f)
+    fun `detecta TURN_FACE_LEFT quando o rosto vira para a esquerda`() {
+        // Câmera espelhada: virar à esquerda desloca o nariz para a DIREITA da imagem
+        neutralLandmarks[4] = mockLandmark(0.75f, 0.5f)
 
         val result = GestureClassifier.classify(neutralLandmarks, null, thresholds)
         assertEquals(Gesture.TURN_FACE_LEFT, result)
