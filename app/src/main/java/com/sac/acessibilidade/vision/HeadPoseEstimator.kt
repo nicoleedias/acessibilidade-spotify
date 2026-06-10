@@ -44,8 +44,12 @@ object HeadPoseEstimator {
         val forehead = landmarks[IDX_FOREHEAD]
         val chin = landmarks[IDX_CHIN]
 
+        // Câmera frontal espelhada: assim como no yaw, a inclinação lateral aparece
+        // invertida na imagem que o MediaPipe processa. Negamos o ângulo para que
+        // inclinar a cabeça para a DIREITA do usuário produza roll positivo,
+        // alinhando com TILT_HEAD_RIGHT.
         val roll =
-            Math.toDegrees(
+            -Math.toDegrees(
                 atan2(
                     (rightEye.y() - leftEye.y()).toDouble(),
                     (rightEye.x() - leftEye.x()).toDouble(),

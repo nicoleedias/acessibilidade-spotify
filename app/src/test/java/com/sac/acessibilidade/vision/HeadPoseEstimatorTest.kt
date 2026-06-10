@@ -53,11 +53,12 @@ class HeadPoseEstimatorTest {
     }
 
     @Test
-    fun `roll positivo quando olho direito esta mais baixo que esquerdo`() {
+    fun `roll positivo quando o usuario inclina a cabeca para a direita`() {
         val face = neutralFace()
-        // Olho direito mais baixo: roll > 0
-        face[33] = landmark(0.42f, 0.45f)
-        face[263] = landmark(0.58f, 0.55f)
+        // Câmera espelhada: inclinar à direita abaixa o olho que está à ESQUERDA
+        // da imagem (landmark 33). O estimador compensa o espelho → roll positivo.
+        face[33] = landmark(0.42f, 0.55f)
+        face[263] = landmark(0.58f, 0.45f)
 
         val pose = HeadPoseEstimator.estimate(face)
         assertNotNull(pose)
@@ -65,11 +66,12 @@ class HeadPoseEstimatorTest {
     }
 
     @Test
-    fun `roll negativo quando olho esquerdo esta mais baixo que direito`() {
+    fun `roll negativo quando o usuario inclina a cabeca para a esquerda`() {
         val face = neutralFace()
-        // Olho esquerdo mais baixo: roll < 0
-        face[33] = landmark(0.42f, 0.55f)
-        face[263] = landmark(0.58f, 0.45f)
+        // Câmera espelhada: inclinar à esquerda abaixa o olho que está à DIREITA
+        // da imagem (landmark 263) → roll negativo após a compensação.
+        face[33] = landmark(0.42f, 0.45f)
+        face[263] = landmark(0.58f, 0.55f)
 
         val pose = HeadPoseEstimator.estimate(face)
         assertNotNull(pose)

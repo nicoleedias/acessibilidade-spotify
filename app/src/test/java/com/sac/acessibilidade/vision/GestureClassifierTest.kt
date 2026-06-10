@@ -78,20 +78,20 @@ class GestureClassifierTest {
     // ── Gestos de cabeça ─────────────────────────────────────────────────────
 
     @Test
-    fun `detecta TILT_HEAD_RIGHT quando roll excede threshold positivo`() {
-        // Olho direito bem mais baixo: roll ~20° > threshold 15°
-        neutralLandmarks[33] = mockLandmark(0.42f, 0.40f)
-        neutralLandmarks[263] = mockLandmark(0.58f, 0.65f)
+    fun `detecta TILT_HEAD_RIGHT quando o usuario inclina para a direita`() {
+        // Câmera espelhada: inclinar à direita abaixa o olho à ESQUERDA da imagem (33)
+        neutralLandmarks[33] = mockLandmark(0.42f, 0.65f)
+        neutralLandmarks[263] = mockLandmark(0.58f, 0.40f)
 
         val result = GestureClassifier.classify(neutralLandmarks, null, thresholds)
         assertEquals(Gesture.TILT_HEAD_RIGHT, result)
     }
 
     @Test
-    fun `detecta TILT_HEAD_LEFT quando roll excede threshold negativo`() {
-        // Olho esquerdo bem mais baixo: roll < -15°
-        neutralLandmarks[33] = mockLandmark(0.42f, 0.65f)
-        neutralLandmarks[263] = mockLandmark(0.58f, 0.40f)
+    fun `detecta TILT_HEAD_LEFT quando o usuario inclina para a esquerda`() {
+        // Câmera espelhada: inclinar à esquerda abaixa o olho à DIREITA da imagem (263)
+        neutralLandmarks[33] = mockLandmark(0.42f, 0.40f)
+        neutralLandmarks[263] = mockLandmark(0.58f, 0.65f)
 
         val result = GestureClassifier.classify(neutralLandmarks, null, thresholds)
         assertEquals(Gesture.TILT_HEAD_LEFT, result)
@@ -158,7 +158,7 @@ class GestureClassifierTest {
 
     @Test
     fun `piscada tem prioridade sobre gesto de cabeca`() {
-        // Olho direito inclinado E piscada ativa — piscada deve vencer
+        // Cabeça inclinada E piscada ativa — piscada deve vencer
         neutralLandmarks[33] = mockLandmark(0.42f, 0.40f)
         neutralLandmarks[263] = mockLandmark(0.58f, 0.65f)
         val blendshapes = listOf(blendshape("eyeBlinkRight", 0.9f))
