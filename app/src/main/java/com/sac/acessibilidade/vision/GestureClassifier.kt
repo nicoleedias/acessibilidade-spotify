@@ -43,7 +43,8 @@ object GestureClassifier {
         return classifyHeadPose(pose, thresholds)
     }
 
-    private fun classifyBlink(
+    /** Detecta piscadas isoladamente — instantâneo, sem baseline (usado pelo processador). */
+    fun classifyBlink(
         blendshapes: List<Category>?,
         threshold: Float,
     ): Gesture? {

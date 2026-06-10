@@ -17,6 +17,12 @@ class NodDetector {
     private val buffer = ArrayDeque<PitchSample>(MAX_SAMPLES)
     private var lastNodMs = -COOLDOWN_MS
 
+    /** Limpa o buffer e o cooldown — chamar ao (re)ativar a câmera de gestos. */
+    fun reset() {
+        buffer.clear()
+        lastNodMs = -COOLDOWN_MS
+    }
+
     /**
      * Alimenta um novo valor de pitch e retorna true se um NOD foi detectado.
      * [amplitudeDeg] deve vir dos thresholds de calibração do usuário.

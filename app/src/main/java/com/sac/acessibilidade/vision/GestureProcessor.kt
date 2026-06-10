@@ -46,14 +46,7 @@ class GestureProcessor
         private var faceLandmarker: FaceLandmarker? = null
         private var lastGestureMs = 0L
         private val nodDetector = NodDetector()
-
-        // Baseline neutro: média dos primeiros BASELINE_COUNT frames válidos
-        private val baselineSamples = ArrayDeque<HeadPoseEstimator.HeadPose>(BASELINE_COUNT)
-        private var neutralBaseline: HeadPoseEstimator.HeadPose? = null
-
-        // Sustain: exige SUSTAIN_FRAMES frames consecutivos com o mesmo gesto
-        private var sustainedGesture: Gesture? = null
-        private var sustainCount = 0
+        private val stabilizer = HeadGestureStabilizer()
 
         fun initialize() {
             if (faceLandmarker != null) return
@@ -79,10 +72,8 @@ class GestureProcessor
 
         /** Reseta baseline e contadores — chamar sempre que a câmera de gestos é ativada. */
         fun resetBaseline() {
-            baselineSamples.clear()
-            neutralBaseline = null
-            sustainedGesture = null
-            sustainCount = 0
+            stabilizer.reset()
+            nodDetector.reset()
             lastGestureMs = 0L
         }
 
@@ -122,68 +113,33 @@ class GestureProcessor
             now: Long,
         ): Gesture? {
             val rawPose = HeadPoseEstimator.estimate(landmarks) ?: return null
-            collectBaseline(rawPose)
-            val baseline = neutralBaseline ?: return null // bloqueia até baseline pronto
-            val pose = rawPose - baseline
-            return classifyAdjustedPose(result, pose, thresholds, now)
+            val state = stabilizer.update(rawPose, thresholds)
+            val relative = state.relativePose ?: return null // baseline ainda aquecendo
+            // NOD alimenta sempre (mantém buffer contínuo), mesmo durante o cooldown
+            val nod = nodDetector.feed(relative.pitch, now, thresholds.nodPitchAmplitudeDeg)
+            return if (now - lastGestureMs < COOLDOWN_MS) {
+                null
+            } else {
+                firstGesture(nod, state.gesture, result, thresholds)
+            }
         }
 
-        private fun classifyAdjustedPose(
+        /** Prioridade: NOD (temporal) → gesto direcional estabilizado → piscada. */
+        private fun firstGesture(
+            nod: Boolean,
+            directional: Gesture?,
             result: FaceLandmarkerResult,
-            pose: HeadPoseEstimator.HeadPose,
             thresholds: CalibrationThresholds,
-            now: Long,
         ): Gesture? {
-            // NOD: NodDetector gerencia cooldown próprio; checamos também o cooldown global
-            if (nodDetector.feed(pose.pitch, now, thresholds.nodPitchAmplitudeDeg) &&
-                now - lastGestureMs >= COOLDOWN_MS
-            ) {
-                sustainedGesture = null
-                sustainCount = 0
-                return Gesture.NOD
-            }
-            if (now - lastGestureMs < COOLDOWN_MS) return null
+            if (nod) return Gesture.NOD
+            if (directional != null) return directional
             val blendshapes =
                 if (result.faceBlendshapes().isPresent) {
                     result.faceBlendshapes().get().getOrNull(0)
                 } else {
                     null
                 }
-            val candidate = GestureClassifier.classifyWithPose(pose, blendshapes, thresholds)
-            return withSustain(candidate)
-        }
-
-        /**
-         * Exige que o mesmo gesto apareça em [SUSTAIN_FRAMES] frames consecutivos
-         * antes de confirmar — elimina disparos por cruzamentos momentâneos do threshold.
-         */
-        private fun withSustain(candidate: Gesture?): Gesture? =
-            if (candidate != null && candidate == sustainedGesture) {
-                sustainCount++
-                if (sustainCount >= SUSTAIN_FRAMES) {
-                    sustainCount = 0
-                    sustainedGesture = null
-                    candidate
-                } else {
-                    null
-                }
-            } else {
-                sustainedGesture = candidate
-                sustainCount = if (candidate != null) 1 else 0
-                null
-            }
-
-        private fun collectBaseline(pose: HeadPoseEstimator.HeadPose) {
-            if (neutralBaseline != null) return
-            baselineSamples.addLast(pose)
-            if (baselineSamples.size >= BASELINE_COUNT) {
-                neutralBaseline =
-                    HeadPoseEstimator.HeadPose(
-                        roll = baselineSamples.map { it.roll }.average().toFloat(),
-                        pitch = baselineSamples.map { it.pitch }.average().toFloat(),
-                        yaw = baselineSamples.map { it.yaw }.average().toFloat(),
-                    )
-            }
+            return GestureClassifier.classifyBlink(blendshapes, thresholds.blinkThreshold)
         }
 
         fun release() {
@@ -201,7 +157,5 @@ class GestureProcessor
         companion object {
             private const val MODEL_ASSET = "face_landmarker.task"
             private const val COOLDOWN_MS = 1_000L
-            private const val BASELINE_COUNT = 30 // ~2s a 15fps para capturar pose neutra
-            private const val SUSTAIN_FRAMES = 3 // frames consecutivos para confirmar gesto
         }
     }
