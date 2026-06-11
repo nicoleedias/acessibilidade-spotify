@@ -43,7 +43,6 @@ class CalibrationPoseAnalyzer(private val context: Context) : ImageAnalysis.Anal
                     .setMinFacePresenceConfidence(0.5f)
                     .setMinTrackingConfidence(0.5f)
                     .setOutputFaceBlendshapes(false)
-                    .setOutputFacialTransformationMatrixes(true)
                     .setResultListener { result, _ ->
                         // Mesma fonte de pose do GestureProcessor — calibração e runtime
                         // DEVEM medir com o mesmo estimador (matriz 3D com fallback 2D)

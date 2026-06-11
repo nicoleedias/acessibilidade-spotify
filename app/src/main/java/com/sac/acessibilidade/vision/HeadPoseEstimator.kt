@@ -29,7 +29,6 @@ object HeadPoseEstimator {
     private const val IDX_FOREHEAD = 10
     private const val IDX_CHIN = 152
     private const val MIN_LANDMARKS = 478
-    private const val MATRIX_SIZE = 16
 
     data class HeadPose(
         val roll: Float,
@@ -41,15 +40,15 @@ object HeadPoseEstimator {
     }
 
     /**
-     * Extrai a pose do resultado do FaceLandmarker, preferindo a matriz de
-     * transformação facial e caindo para a geometria 2D quando ausente.
+     * Extrai a pose do resultado do FaceLandmarker usando a **geometria 2D dos
+     * landmarks** — a abordagem validada no dispositivo.
+     *
+     * A matriz de transformação 3D ([fromTransformationMatrix]) está implementada e
+     * testada (eixos desacoplados, graus reais), mas a convenção de sinais/ordem do
+     * MediaPipe precisa ser confirmada no aparelho antes de virar padrão; até lá,
+     * mantemos a geometria, que já funciona de forma estável.
      */
     fun fromResult(result: FaceLandmarkerResult): HeadPose? {
-        val matrices = result.facialTransformationMatrixes()
-        if (matrices.isPresent) {
-            val matrix = matrices.get().firstOrNull()
-            if (matrix != null && matrix.size >= MATRIX_SIZE) return fromTransformationMatrix(matrix)
-        }
         val landmarks = result.faceLandmarks().firstOrNull() ?: return null
         return estimate(landmarks)
     }
@@ -58,6 +57,7 @@ object HeadPoseEstimator {
      * Decompõe a rotação de uma matriz 4x4 column-major (canônico → câmera) em
      * ângulos de Euler (R = Rz·Ry·Rx). Os valores são graus REAIS de rotação da
      * cabeça — virar 30° produz ~30°, independentemente da projeção 2D.
+     * Disponível para validação futura no device (ver [fromResult]).
      */
     fun fromTransformationMatrix(matrix: FloatArray): HeadPose {
         val yaw = Math.toDegrees(asin((-matrix[2]).coerceIn(-1f, 1f).toDouble())).toFloat()

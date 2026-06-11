@@ -73,9 +73,14 @@ object CalibrationThresholdCalculator {
 
     const val THRESHOLD_RATIO = 0.75f
     const val NOD_RATIO = 0.6f
+
+    // Pisos por eixo. Roll usa graus reais (atan2) e atinge amplitude com folga.
+    // Yaw/pitch vêm de geometria 2D que encolhe na projeção (virar/levantar o queixo
+    // aponta o nariz para a câmera), então recebem pisos menores para que mesmo um
+    // movimento pequeno seja calibrável e detectável — essencial para mobilidade reduzida.
     const val MIN_ROLL_DEG = 6f
-    const val MIN_PITCH_DEG = 5f
-    const val MIN_YAW_DEG = 8f
+    const val MIN_PITCH_DEG = 4f
+    const val MIN_YAW_DEG = 5f
     const val MIN_NOD_DEG = 8f
     const val MAX_NOD_DEG = 22f
 }

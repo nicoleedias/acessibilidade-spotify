@@ -63,7 +63,6 @@ class GestureProcessor
                         .setMinFacePresenceConfidence(0.5f)
                         .setMinTrackingConfidence(0.5f)
                         .setOutputFaceBlendshapes(true)
-                        .setOutputFacialTransformationMatrixes(true)
                         .setResultListener { result, _ -> onResult(result) }
                         .setErrorListener { _ -> }
                         .build()
