@@ -1,7 +1,7 @@
 **Universidade Católica de Brasília**
 **Disciplina:** Análise e Projeto de Software
 
-# SISTEMA DE ACESSIBILIDADE CEFÁLICA PARA SPOTIFY
+# Nodify
 ## Especificação de Casos de Uso
 
 **Autores:** Nicole Cardoso Dias, Pedro Cauã, Samuel Gomes, Rodrigo Barbosa, Ricardo Oliveira, Victor Salvador
