@@ -3,7 +3,7 @@
 
 # Documentação de Interface e Usabilidade 
 
-**Projeto:** Sistema de Acessibilidade Cefálica (SAC) para Spotify
+**Projeto:** Nodify
 **Objetivo:** Especificar a estrutura visual, fluxos de navegação e diretrizes de design adotadas para garantir uma experiência acessível e autônoma para os usuários.
 
 ---
