@@ -1,11 +1,11 @@
-# Sistema de Acessibilidade Cefálica para Spotify (SAC)
+# Nodify
 
 ![Status do Projeto](https://img.shields.io/badge/Status-MVP%20Funcional-green)
 ![Plataforma](https://img.shields.io/badge/Plataforma-Android-3DDC84)
 ![Linguagem](https://img.shields.io/badge/Linguagem-Kotlin-7F52FF)
 ![Min SDK](https://img.shields.io/badge/Android-10%2B%20(API%2029)-orange)
 
-O Sistema de Acessibilidade Cefálica (SAC) usa visão computacional para traduzir movimentos da cabeça em comandos no Spotify. Focado em pessoas com deficiência motora, promove autonomia com processamento **100% local**, garantindo privacidade e baixa latência sem enviar imagens a servidores.
+O Sistema de Acessibilidade Cefálica, Nodify, usa visão computacional para traduzir movimentos da cabeça em comandos no Spotify. Focado em pessoas com deficiência motora, promove autonomia com processamento **100% local**, garantindo privacidade e baixa latência sem enviar imagens a servidores.
 
 ## Visão Geral
 A acessibilidade digital é fundamental para a autonomia, mas interfaces baseadas no toque ainda excluem pessoas com limitações motoras severas. Este projeto é um Produto Mínimo Viável (MVP) capaz de identificar movimentos faciais e traduzi-los em comandos de navegação no celular, focado no controle do aplicativo Spotify.
