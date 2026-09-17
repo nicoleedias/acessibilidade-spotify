@@ -5,9 +5,9 @@
 
 ## Informações do Projeto
 
-| Sigla - Nome do Projeto | Gestor / Orientador | Equipe de Desenvolvimento |
+|  Nome do Projeto | Gestor / Orientador | Equipe de Desenvolvimento |
 | :--- | :--- | :--- |
-| SAC - Sistema de Acessibilidade Cefálica para Spotify | Alexandre S. D. Santos | Nicole, Pedro Caua, Samuel Gomes, Rodrigo, Ricardo, Victor |
+| Nodify | Alexandre S. D. Santos | Nicole, Pedro Caua, Samuel Gomes, Rodrigo, Ricardo, Victor |
 
 ## Objetivo deste Documento
 Este documento tem como objetivo descrever as principais decisões de projeto tomadas pela equipe de desenvolvimento e os critérios considerados durante a tomada destas decisões. Suas informações incluem a parte de hardware e software do sistema.
