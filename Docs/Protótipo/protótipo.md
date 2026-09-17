@@ -6,6 +6,6 @@
 
 | **Tela Inicial** | **Tela Home** |
 | :---: | :---: |
-| <img width="250" src="https://github.com/user-attachments/assets/db88c235-fb6f-405d-a611-fcac3cfe04b7" /> |<img width="250" src="https://github.com/user-attachments/assets/c0e177a1-c69d-4db4-b36d-e60af96fb899" /> |
-|  **Tela de Calibrar Rosto** | **Tela de Configurar Gestos**  |
-|  <img width="250" src="https://github.com/user-attachments/assets/15c6d988-5475-40fc-91c6-fe612fe15cf6" /> | <img width="250" src="https://github.com/user-attachments/assets/079b9989-2919-4a49-a46c-6107a24f66ce" /> |
+| <img width="250" src="https://github.com/user-attachments/assets/d0175c8a-015e-4996-ab73-e245dded3635" /> | <img width="250" src="https://github.com/user-attachments/assets/20a32179-abba-45aa-a116-8269c054dffb" /> |
+| **Tela de Calibrar Rosto** | **Tela de Configurar Gestos** |
+| <img width="250" src="https://github.com/user-attachments/assets/15c6d988-5475-40fc-91c6-fe612fe15cf6" /> | <img width="250" src="https://github.com/user-attachments/assets/079b9989-2919-4a49-a46c-6107a24f66ce" /> |
