@@ -4,6 +4,7 @@
 # Documentação de Interface e Usabilidade 
 
 **Projeto:** Nodify
+
 **Objetivo:** Especificar a estrutura visual, fluxos de navegação e diretrizes de design adotadas para garantir uma experiência acessível e autônoma para os usuários.
 
 ---
