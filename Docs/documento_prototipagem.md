@@ -3,7 +3,7 @@
 
 # Documentos de Suporte à Prototipação
 
-**Projeto:** SAC - Sistema de Acessibilidade Cefálica para Spotify
+**Projeto:** Nodify
 
 **Objetivo:** Especificar a estrutura visual, fluxos de navegação e diretrizes de design para a construção das interfaces do aplicativo.
 
