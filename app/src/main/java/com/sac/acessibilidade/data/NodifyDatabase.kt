@@ -10,6 +10,6 @@ import com.sac.acessibilidade.data.gesture.GestureMappingEntity
     version = 1,
     exportSchema = true,
 )
-abstract class SacDatabase : RoomDatabase() {
+abstract class NodifyDatabase : RoomDatabase() {
     abstract fun gestureMappingDao(): GestureMappingDao
 }

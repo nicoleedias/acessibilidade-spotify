@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SAC"
+rootProject.name = "Nodify"
 include(":app")

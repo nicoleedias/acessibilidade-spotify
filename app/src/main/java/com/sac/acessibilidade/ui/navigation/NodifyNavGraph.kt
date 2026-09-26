@@ -27,7 +27,7 @@ import com.sac.acessibilidade.ui.screens.PlayerAtivoScreen
 import com.sac.acessibilidade.ui.screens.PlayerAtivoViewModel
 
 @Composable
-fun SacNavHost(
+fun NodifyNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {

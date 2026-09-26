@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SAC</string>
+    <string name="app_name">Nodify</string>
 
     <!-- Login -->
     <string name="login_title">Bem-vindo</string>
@@ -72,4 +72,16 @@
     <string name="error_poor_lighting">Iluminação insuficiente. Mova-se para um ambiente mais claro.</string>
     <string name="error_face_not_found">Rosto não detectado. Centralize seu rosto na câmera.</string>
     <string name="error_spotify_unavailable">Não foi possível conectar ao Spotify. Tente novamente.</string>
+
+    <!-- Calibracao: regra de um rosto por conta -->
+    <string name="calibration_single_face_title">Apenas um rosto por conta</string>
+    <string name="calibration_single_face_body">O Nodify guarda um único rosto por conta. Ao calibrar de novo, a medição anterior é substituída. Mantenha só você diante da câmera.</string>
+
+    <!-- Calibracao: feedback de qualidade da captura -->
+    <string name="capture_too_dark">Ambiente escuro. Acenda uma luz ou mude para um local mais claro.</string>
+    <string name="capture_too_bright">Luz forte demais. Evite janelas e lâmpadas atrás de você.</string>
+    <string name="capture_no_face">Rosto não detectado. Centralize o rosto no oval.</string>
+    <string name="capture_multiple_faces">Mais de um rosto na câmera. Só você deve aparecer.</string>
+    <string name="capture_face_too_far">Você está longe. Aproxime-se da câmera.</string>
+    <string name="capture_face_too_close">Você está muito perto. Afaste-se um pouco.</string>
 </resources>

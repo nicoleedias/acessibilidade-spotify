@@ -65,7 +65,7 @@ import coil3.compose.AsyncImage
 import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.ErrorRed
-import com.sac.acessibilidade.ui.theme.SacTheme
+import com.sac.acessibilidade.ui.theme.NodifyTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.SurfaceDark
 import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
@@ -454,7 +454,7 @@ private fun PlaybackControlsRow(
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun PlayerAtivoScreenPreview() {
-    SacTheme {
+    NodifyTheme {
         PlayerAtivoScreen()
     }
 }
@@ -463,7 +463,7 @@ private fun PlayerAtivoScreenPreview() {
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun PlayerAtivoScreenWithGesturePreview() {
-    SacTheme {
+    NodifyTheme {
         PlayerAtivoScreen(
             uiState =
                 PlayerAtivoUiState(

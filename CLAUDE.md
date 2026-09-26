@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SAC — Sistema de Acessibilidade Cefálica para Spotify** is an Android MVP that lets users with motor disabilities control Spotify playback using head gestures detected via the front-facing camera. All video processing is local (Edge Computing) — no frames are sent to any server.
+**Nodify — Sistema de Acessibilidade Cefálica para Spotify** is an Android MVP that lets users with motor disabilities control Spotify playback using head gestures detected via the front-facing camera. All video processing is local (Edge Computing) — no frames are sent to any server.
 
 The project is in the **early implementation phase**: five UI screens are implemented (no MVVM/ViewModel/Room yet — that refactor comes next). The `Docs/` folder contains all design documents.
 
@@ -20,7 +20,7 @@ The project is in the **early implementation phase**: five UI screens are implem
 | External Integration | Spotify Web API (REST, OAuth 2.0 with PKCE)                      |
 | Local Persistence    | SQLite (via Room)                                                |
 | Architecture Pattern | MVVM                                                             |
-| DI                   | Hilt (`@HiltAndroidApp` on `SacApplication`, `@AndroidEntryPoint` on `MainActivity`) |
+| DI                   | Hilt (`@HiltAndroidApp` on `NodifyApplication`, `@AndroidEntryPoint` on `MainActivity`) |
 | Async                | Kotlin Coroutines + Flow                                         |
 | Tests                | JUnit 4, MockK, Compose UI Test, Espresso                        |
 
@@ -28,12 +28,12 @@ The project is in the **early implementation phase**: five UI screens are implem
 
 ```
 app/src/main/java/com/sac/acessibilidade/
-├── MainActivity.kt           # Entry point — sets SacTheme + SacNavHost
-├── SacApplication.kt         # @HiltAndroidApp
+├── MainActivity.kt           # Entry point — sets NodifyTheme + NodifyNavHost
+├── NodifyApplication.kt         # @HiltAndroidApp
 └── ui/
     ├── navigation/
     │   ├── Screen.kt         # sealed class Screen(val route: String) with 5 destinations
-    │   └── SacNavGraph.kt    # SacNavHost composable (NavHost wiring)
+    │   └── SacNavGraph.kt    # NodifyNavHost composable (NavHost wiring)
     ├── screens/
     │   ├── LoginScreen.kt
     │   ├── HomeScreen.kt

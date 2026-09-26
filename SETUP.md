@@ -1,6 +1,6 @@
 # Guia rápido de setup (máquina nova)
 
-Checklist para rodar o **SAC** num desktop/telefone novo. Para detalhes, ver o [README](README.md).
+Checklist para rodar o **Nodify** num desktop/telefone novo. Para detalhes, ver o [README](README.md).
 
 > O `local.properties` (com o Client ID) **não vem no `git clone`** — é ignorado pelo Git por segurança. Você o recria pelo template.
 

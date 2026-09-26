@@ -7,8 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
 import com.sac.acessibilidade.spotify.auth.SpotifyAuthRepository
-import com.sac.acessibilidade.ui.navigation.SacNavHost
-import com.sac.acessibilidade.ui.theme.SacTheme
+import com.sac.acessibilidade.ui.navigation.NodifyNavHost
+import com.sac.acessibilidade.ui.theme.NodifyTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -23,9 +23,9 @@ class MainActivity : ComponentActivity() {
         // Trata o caso de o app ser aberto diretamente via redirect URI
         handleSpotifyCallback(intent)
         setContent {
-            SacTheme {
+            NodifyTheme {
                 val navController = rememberNavController()
-                SacNavHost(navController = navController)
+                NodifyNavHost(navController = navController)
             }
         }
     }

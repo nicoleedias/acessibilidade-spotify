@@ -1,5 +1,7 @@
 package com.sac.acessibilidade.ui.screens
 
+import com.sac.acessibilidade.vision.CaptureIssue
+
 enum class CalibrationStep {
     NEUTRAL,
     TILT_RIGHT,
@@ -28,4 +30,6 @@ data class CalibrationUiState(
     val isAtLimit: Boolean = false,
     /** Mensagem de orientação após uma tentativa inválida (ex.: movimento pequeno). */
     val retryMessage: String? = null,
+    /** Qualidade da captura neste instante (luz, enquadramento, nº de rostos). */
+    val captureIssue: CaptureIssue = CaptureIssue.NO_FACE,
 )

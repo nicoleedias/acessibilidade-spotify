@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,7 +45,7 @@ import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.BorderDark
 import com.sac.acessibilidade.ui.theme.ErrorRed
-import com.sac.acessibilidade.ui.theme.SacTheme
+import com.sac.acessibilidade.ui.theme.NodifyTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.SurfaceDark
 import com.sac.acessibilidade.ui.theme.TextDisabled
@@ -90,11 +91,15 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(96.dp))
 
-            // Logo SAC — cartão com gradiente escuro, fiel ao Figma
+            // Logo Nodify — cartão com gradiente escuro, fiel ao Figma.
+            // A largura acompanha o wordmark (mínimo de 176.dp) em vez de ser
+            // fixa: se o usuário aumentar a fonte do sistema, o cartão cresce
+            // junto e a marca não é cortada.
             Box(
                 modifier =
                     Modifier
-                        .size(112.dp)
+                        .height(100.dp)
+                        .widthIn(min = 176.dp)
                         .clip(RoundedCornerShape(28.dp))
                         .background(
                             brush =
@@ -104,11 +109,12 @@ fun LoginScreen(
                                     end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
                                 ),
                         )
-                        .border(1.dp, BorderDark, RoundedCornerShape(28.dp)),
+                        .border(1.dp, BorderDark, RoundedCornerShape(28.dp))
+                        .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "SAC",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.displayLarge,
                     color = TextPrimary,
                 )
@@ -216,7 +222,7 @@ fun LoginScreen(
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun LoginScreenPreview() {
-    SacTheme {
+    NodifyTheme {
         LoginScreen()
     }
 }
@@ -225,7 +231,7 @@ private fun LoginScreenPreview() {
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun LoginScreenLoadingPreview() {
-    SacTheme {
+    NodifyTheme {
         LoginScreen(uiState = LoginUiState.Loading)
     }
 }
@@ -234,7 +240,7 @@ private fun LoginScreenLoadingPreview() {
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun LoginScreenErrorPreview() {
-    SacTheme {
+    NodifyTheme {
         LoginScreen(uiState = LoginUiState.Error("Falha ao conectar com o Spotify. Tente novamente."))
     }
 }

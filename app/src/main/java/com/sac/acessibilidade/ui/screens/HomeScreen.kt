@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.BorderDark
-import com.sac.acessibilidade.ui.theme.SacTheme
+import com.sac.acessibilidade.ui.theme.NodifyTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.SurfaceDark
 import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
@@ -67,13 +67,13 @@ fun HomeScreen(
     ) {
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Header: logo SAC + badge "Spotify Conectado"
+        // Header: logo Nodify + badge "Spotify Conectado"
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SacLogoMini()
+            NodifyLogoMini()
             SpotifyConnectedBadge()
         }
 
@@ -140,18 +140,20 @@ fun HomeScreen(
 }
 
 @Composable
-private fun SacLogoMini() {
+private fun NodifyLogoMini() {
+    // Badge da marca: a largura acompanha o wordmark, só a altura é fixa.
     Box(
         modifier =
             Modifier
-                .size(48.dp)
+                .height(40.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(SurfaceDark)
-                .border(1.dp, BorderDark, RoundedCornerShape(14.dp)),
+                .border(1.dp, BorderDark, RoundedCornerShape(14.dp))
+                .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "SAC",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
         )
@@ -305,7 +307,7 @@ private fun NowPlayingMiniCard(
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun HomeScreenPreview() {
-    SacTheme {
+    NodifyTheme {
         HomeScreen()
     }
 }

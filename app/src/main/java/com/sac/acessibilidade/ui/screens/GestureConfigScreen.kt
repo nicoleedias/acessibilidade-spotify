@@ -61,7 +61,7 @@ import com.sac.acessibilidade.domain.gesture.SpotifyAction
 import com.sac.acessibilidade.domain.gesture.displayName
 import com.sac.acessibilidade.ui.theme.BackgroundDark
 import com.sac.acessibilidade.ui.theme.BorderDark
-import com.sac.acessibilidade.ui.theme.SacTheme
+import com.sac.acessibilidade.ui.theme.NodifyTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.SurfaceDark
 import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
@@ -316,7 +316,7 @@ private fun GestureConfigScreenPreview() {
                 icon = Icons.Default.Face,
             )
         }
-    SacTheme {
+    NodifyTheme {
         GestureConfigScreen(
             uiState = GestureConfigUiState(mappings = previewMappings),
             onMappingChanged = { _, _ -> },

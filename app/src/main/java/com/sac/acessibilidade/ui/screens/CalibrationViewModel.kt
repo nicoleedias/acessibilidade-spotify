@@ -7,6 +7,7 @@ import com.sac.acessibilidade.data.calibration.CalibrationRepository
 import com.sac.acessibilidade.domain.gesture.CalibrationThresholdCalculator
 import com.sac.acessibilidade.domain.gesture.CalibrationThresholdCalculator.Axis
 import com.sac.acessibilidade.vision.CalibrationPoseAnalyzer
+import com.sac.acessibilidade.vision.CaptureIssue
 import com.sac.acessibilidade.vision.HeadPoseEstimator.HeadPose
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -52,6 +53,7 @@ class CalibrationViewModel
         init {
             poseAnalyzer.initialize()
             collectPose()
+            collectQuality()
         }
 
         // ── Coleta contínua da pose ────────────────────────────────────────────
@@ -68,11 +70,29 @@ class CalibrationViewModel
             }
         }
 
+        /**
+         * Acompanha a qualidade do quadro. Um segundo rosto entrando em cena no meio
+         * de uma medição invalida a captura: os picos passariam a misturar duas
+         * pessoas, então abortamos o passo em vez de salvar um limiar corrompido.
+         */
+        private fun collectQuality() {
+            viewModelScope.launch {
+                poseAnalyzer.qualityFlow.collect { issue ->
+                    val previous = _uiState.value
+                    _uiState.update { it.copy(captureIssue = issue) }
+                    if (issue == CaptureIssue.MULTIPLE_FACES) {
+                        if (previous.isHolding) abortHold(MSG_MULTIPLE_FACES)
+                        if (previous.isCapturingNeutral) abortNeutral(MSG_MULTIPLE_FACES)
+                    }
+                }
+            }
+        }
+
         private fun onFaceLost() {
             val wasHolding = _uiState.value.isHolding
             _uiState.update { it.copy(faceDetected = false, currentAngleDeg = 0f, isAtLimit = false) }
             if (wasHolding) abortHold(MSG_FACE_LOST)
-            if (_uiState.value.isCapturingNeutral) abortNeutral()
+            if (_uiState.value.isCapturingNeutral) abortNeutral(MSG_HOLD_STILL)
         }
 
         private fun onPose(rawPose: HeadPose) {
@@ -95,8 +115,8 @@ class CalibrationViewModel
         // ── Passo NEUTRAL: captura da pose de repouso ──────────────────────────
 
         fun startNeutralCapture() {
-            if (!_uiState.value.faceDetected) {
-                setRetry(MSG_NO_FACE)
+            blockingMessage()?.let {
+                setRetry(it)
                 return
             }
             holdJob?.cancel()
@@ -118,7 +138,7 @@ class CalibrationViewModel
 
         private fun finishNeutralCapture() {
             if (neutralSamples.size < MIN_NEUTRAL_SAMPLES) {
-                abortNeutral()
+                abortNeutral(MSG_HOLD_STILL)
                 return
             }
             neutral = neutralSamples.average()
@@ -126,11 +146,11 @@ class CalibrationViewModel
             advance()
         }
 
-        private fun abortNeutral() {
+        private fun abortNeutral(message: String) {
             holdJob?.cancel()
             neutralSamples.clear()
             _uiState.update {
-                it.copy(isCapturingNeutral = false, neutralProgress = 0f, retryMessage = MSG_HOLD_STILL)
+                it.copy(isCapturingNeutral = false, neutralProgress = 0f, retryMessage = message)
             }
         }
 
@@ -138,8 +158,8 @@ class CalibrationViewModel
 
         fun confirmPosition() {
             val state = _uiState.value
-            if (!state.faceDetected) {
-                setRetry(MSG_NO_FACE)
+            blockingMessage()?.let {
+                setRetry(it)
                 return
             }
             if (!state.isAtLimit) {
@@ -276,6 +296,20 @@ class CalibrationViewModel
                 else -> Float.MAX_VALUE
             }
 
+        /**
+         * Motivo que impede iniciar/confirmar uma medição agora, ou null se o quadro
+         * está utilizável. Dois rostos vêm antes de "sem rosto" porque é o caso em que
+         * o usuário precisa agir sobre o ambiente, não sobre a própria posição.
+         */
+        private fun blockingMessage(): String? {
+            val state = _uiState.value
+            return when {
+                state.captureIssue == CaptureIssue.MULTIPLE_FACES -> MSG_MULTIPLE_FACES
+                !state.faceDetected -> MSG_NO_FACE
+                else -> null
+            }
+        }
+
         private fun setRetry(message: String) {
             _uiState.update { it.copy(retryMessage = message) }
         }
@@ -311,5 +345,7 @@ class CalibrationViewModel
             private const val MSG_LEFT_POSITION = "Você saiu da posição — tente manter até o fim"
             private const val MSG_GO_FURTHER = "Vá até o limite confortável antes de confirmar"
             private const val MSG_HOLD_STILL = "Fique parado olhando para a frente e tente de novo"
+            private const val MSG_MULTIPLE_FACES =
+                "Mais de um rosto na câmera — só o seu deve aparecer durante a calibração"
         }
     }

@@ -32,11 +32,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
@@ -75,12 +77,19 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.sac.acessibilidade.R
 import com.sac.acessibilidade.ui.theme.BackgroundDark
-import com.sac.acessibilidade.ui.theme.SacTheme
+import com.sac.acessibilidade.ui.theme.NodifyTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
 import com.sac.acessibilidade.vision.CalibrationPoseAnalyzer
+import com.sac.acessibilidade.vision.CaptureIssue
 import androidx.camera.core.Preview as CameraPreviewUseCase
+
+// Vermelho escuro com texto branco: 5.9:1. Âmbar com texto quase preto: 11:1.
+// Âmbar com texto branco daria ~2:1 e reprovaria no critério de contraste.
+private val BadgeBlocking = Color(0xFFC62828)
+private val BadgeAdvisory = Color(0xFFFFB74D)
+private val BadgeAdvisoryText = Color(0xFF1A1A1A)
 
 private val directionSteps =
     listOf(
@@ -198,7 +207,12 @@ fun CalibrationScreen(
         }
 
         // Indicador de ângulo ao vivo (visível apenas durante os passos de direção)
-        if (uiState.step in directionSteps && uiState.currentAngleDeg > 0.5f) {
+        // O ângulo cede o lugar ao aviso de qualidade: os dois ocupam o mesmo
+        // ponto da tela e, com a luz ruim, corrigir o ambiente vem antes do ângulo.
+        if (uiState.captureIssue == CaptureIssue.NONE &&
+            uiState.step in directionSteps &&
+            uiState.currentAngleDeg > 0.5f
+        ) {
             Box(
                 modifier =
                     Modifier
@@ -224,26 +238,14 @@ fun CalibrationScreen(
             }
         }
 
-        // Aviso quando nenhum rosto é detectado (não conflita com o ângulo, que exige rosto)
-        if (!uiState.faceDetected) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .statusBarsPadding()
-                        .padding(top = 116.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFC62828).copy(alpha = 0.85f))
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .semantics { contentDescription = "Rosto não detectado" },
-            ) {
-                Text(
-                    text = "Rosto não detectado",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextPrimary,
-                )
-            }
-        }
+        CaptureQualityBadge(
+            issue = uiState.captureIssue,
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .padding(top = 112.dp),
+        )
 
         CalibrationBottomPanel(
             uiState = uiState,
@@ -384,9 +386,10 @@ private fun CalibrationBottomPanel(
         }
         when (uiState.step) {
             CalibrationStep.NEUTRAL -> {
+                SingleFaceNotice()
                 Button(
                     onClick = onStartCalibration,
-                    enabled = !uiState.isCapturingNeutral,
+                    enabled = !uiState.isCapturingNeutral && !uiState.captureIssue.isBlocking,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
@@ -433,7 +436,9 @@ private fun CalibrationBottomPanel(
                 )
                 Button(
                     onClick = onConfirmPosition,
-                    enabled = !uiState.isHolding && uiState.isAtLimit && uiState.faceDetected,
+                    enabled =
+                        !uiState.isHolding && uiState.isAtLimit &&
+                            uiState.faceDetected && !uiState.captureIssue.isBlocking,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = SpotifyGreen),
@@ -480,6 +485,89 @@ private fun CalibrationBottomPanel(
             }
         }
     }
+}
+
+/**
+ * Feedback de captura: luz, enquadramento e número de rostos.
+ * Vermelho = impede calibrar; âmbar = só reduz a precisão.
+ */
+@Composable
+private fun CaptureQualityBadge(
+    issue: CaptureIssue,
+    modifier: Modifier = Modifier,
+) {
+    val message = captureMessageFor(issue) ?: return
+    Box(
+        modifier =
+            modifier
+                .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (issue.isBlocking) BadgeBlocking else BadgeAdvisory)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .semantics { contentDescription = message },
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (issue.isBlocking) TextPrimary else BadgeAdvisoryText,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/**
+ * Aviso permanente no início da calibração: a conta guarda um rosto só.
+ * Fica visível antes de começar (e não num diálogo que se fecha) porque é a
+ * condição que o usuário precisa manter durante toda a sessão.
+ */
+@Composable
+private fun SingleFaceNotice(modifier: Modifier = Modifier) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color.White.copy(alpha = 0.06f))
+                .padding(14.dp)
+                .semantics(mergeDescendants = true) {},
+    ) {
+        Icon(
+            imageVector = Icons.Default.Info,
+            contentDescription = null,
+            tint = SpotifyGreen,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                text = stringResource(R.string.calibration_single_face_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = TextPrimary,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.calibration_single_face_body),
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
+            )
+        }
+    }
+}
+
+/** Mensagem exibida para cada problema de captura, ou null quando está tudo certo. */
+@Composable
+private fun captureMessageFor(issue: CaptureIssue): String? {
+    val resId =
+        when (issue) {
+            CaptureIssue.NONE -> return null
+            CaptureIssue.TOO_DARK -> R.string.capture_too_dark
+            CaptureIssue.TOO_BRIGHT -> R.string.capture_too_bright
+            CaptureIssue.NO_FACE -> R.string.capture_no_face
+            CaptureIssue.MULTIPLE_FACES -> R.string.capture_multiple_faces
+            CaptureIssue.FACE_TOO_FAR -> R.string.capture_face_too_far
+            CaptureIssue.FACE_TOO_CLOSE -> R.string.capture_face_too_close
+        }
+    return stringResource(resId)
 }
 
 @Composable
@@ -575,7 +663,13 @@ private fun holdHintFor(uiState: CalibrationUiState): String =
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)
 @Composable
 private fun CalibrationScreenPreview() {
-    SacTheme {
-        CalibrationScreen()
+    NodifyTheme {
+        CalibrationScreen(
+            uiState =
+                CalibrationUiState(
+                    faceDetected = true,
+                    captureIssue = CaptureIssue.NONE,
+                ),
+        )
     }
 }

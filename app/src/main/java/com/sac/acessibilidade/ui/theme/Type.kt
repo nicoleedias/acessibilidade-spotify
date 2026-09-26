@@ -16,7 +16,7 @@ val InterFontFamily = FontFamily.SansSerif
 
 // Escala tipográfica alinhada ao Figma (documento_interface.md):
 // Títulos 28–32sp, corpo 14–16sp, rótulos 12–16sp.
-val SacTypography =
+val NodifyTypography =
     Typography(
         displayLarge =
             TextStyle(

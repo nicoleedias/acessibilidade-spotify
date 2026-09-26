@@ -1,4 +1,4 @@
-# Regras ProGuard para o SAC.
+# Regras ProGuard para o Nodify.
 # Quando minifyEnabled for ativado no release, adicionar regras específicas
 # para Retrofit, Room e kotlinx.serialization aqui.
 

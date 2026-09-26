@@ -4,9 +4,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-// O SAC usa dark theme como padrão (documento_interface.md §4) para reduzir
+// O Nodify usa dark theme como padrão (documento_interface.md §4) para reduzir
 // cansaço visual e manter identidade visual alinhada ao Spotify.
-private val SacDarkColorScheme =
+private val NodifyDarkColorScheme =
     darkColorScheme(
         primary = SpotifyGreen,
         onPrimary = TextPrimary,
@@ -25,10 +25,10 @@ private val SacDarkColorScheme =
     )
 
 @Composable
-fun SacTheme(content: @Composable () -> Unit) {
+fun NodifyTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = SacDarkColorScheme,
-        typography = SacTypography,
+        colorScheme = NodifyDarkColorScheme,
+        typography = NodifyTypography,
         content = content,
     )
 }

@@ -2,7 +2,7 @@ package com.sac.acessibilidade.data.di
 
 import android.content.Context
 import androidx.room.Room
-import com.sac.acessibilidade.data.SacDatabase
+import com.sac.acessibilidade.data.NodifyDatabase
 import com.sac.acessibilidade.data.calibration.CalibrationRepository
 import com.sac.acessibilidade.data.calibration.CalibrationRepositoryImpl
 import com.sac.acessibilidade.data.gesture.GestureMappingDao
@@ -32,14 +32,14 @@ abstract class DataModule {
         @Singleton
         fun provideDatabase(
             @ApplicationContext context: Context,
-        ): SacDatabase =
+        ): NodifyDatabase =
             Room
-                .databaseBuilder(context, SacDatabase::class.java, "sac.db")
+                .databaseBuilder(context, NodifyDatabase::class.java, "sac.db")
                 .fallbackToDestructiveMigration()
                 .build()
 
         @Provides
         @Singleton
-        fun provideGestureMappingDao(db: SacDatabase): GestureMappingDao = db.gestureMappingDao()
+        fun provideGestureMappingDao(db: NodifyDatabase): GestureMappingDao = db.gestureMappingDao()
     }
 }
