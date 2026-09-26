@@ -181,6 +181,8 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
+    // runTest nos testes de integração (mesma lib já usada nos testes unitários)
+    androidTestImplementation(libs.coroutines.test)
 
     // Debug
     debugImplementation(libs.compose.ui.tooling)
