@@ -110,8 +110,14 @@ um gesto; o ViewModel recebe os repositórios por construtor, substituídos por 
 a tela e não têm lógica. Domínio, dados, integração com o Spotify e os 4 ViewModels estão em 100 %.
 
 **"E a interface, é testada?"**
-Sim — 51 testes de Compose UI Test e 33 de integração. Mas precisam de celular conectado e ainda não
-foram executados. Está declarado na seção 5.3 do documento.
+Sim, de duas formas. Manualmente no aparelho (Galaxy S25+, Android 15): são os TF01–TF08 e os
+TI01–TI11 do documento, todos aprovados. E de forma automatizada, com 51 testes de Compose UI Test
+e 33 de integração — esses estão implementados e compilam, mas exigem celular conectado e ainda não
+foram executados.
+
+**"O documento fala em 186 testes, mas você rodou 61. Por quê?"**
+Os 186 são a suíte unitária completa. Os 61 são um recorte das quatro funcionalidades principais,
+para a demonstração caber no tempo. Rode `./gradlew test` que os 186 aparecem.
 
 **"Por que MockK e não Mockito?"**
 Classes Kotlin são `final` por padrão; o Mockito precisaria de configuração extra. O MockK também
