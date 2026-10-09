@@ -208,7 +208,7 @@ M08 é a mais séria: não é um defeito encontrado por teste, e sim um requisit
 # Cobertura (Kover) — relatório em app/build/reports/kover/htmlDebug/index.html
 ./gradlew koverHtmlReportDebug
 
-# Conjunto de demonstração: 53 testes de lógica pura, ~7 s, listados um a um
+# Conjunto de demonstração: 61 testes, ~10 s — uma classe por etapa da jornada do usuário
 ./gradlew testDebugUnitTest -Pdemo
 ```
 

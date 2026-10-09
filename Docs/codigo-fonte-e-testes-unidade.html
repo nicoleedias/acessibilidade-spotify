@@ -202,26 +202,27 @@ indicadores acima — nenhum resultado foi presumido.
 </div>
 
 <h3>Conjunto de demonstração</h3>
-<p>Para execução ao vivo foi preparado um subconjunto de <b>53 testes</b> em quatro classes, cobrindo os
-três casos de uso. São testes de lógica pura: não usam corrotinas, rede, banco nem dispositivo, o que os
-torna rápidos e determinísticos.</p>
+<p>Para execução ao vivo foi preparado um subconjunto de <b>61 testes</b> em quatro classes, uma para
+cada etapa da jornada do usuário — detectar o gesto, calibrar, customizar o mapeamento e disparar o
+comando no Spotify. Nenhum depende de rede, banco ou dispositivo: rodam na JVM e são determinísticos
+(verificados em execuções repetidas).</p>
 
 <pre>./gradlew testDebugUnitTest -Pdemo
-<span class="c">CalibrationThresholdCalculatorTest &gt; aplica 75 por cento do pico PASSED  (… 53 linhas)
-BUILD SUCCESSFUL in 7s — 53 testes, 0 falhas</span></pre>
+<span class="c">CalibrationThresholdCalculatorTest &gt; aplica 75 por cento do pico PASSED  (… 61 linhas)
+BUILD SUCCESSFUL in 10s — 61 testes, 0 falhas</span></pre>
 <p>O conjunto ignora o cache do Gradle de propósito: os testes são de fato executados a cada chamada e
 listados um a um, em vez de o build reportar <code>FROM-CACHE</code> sem mostrar nada.</p>
 
 <table>
 <thead><tr>
-  <th style="width:27%">Classe de teste</th><th style="width:8%">Testes</th><th style="width:9%">Caso de uso</th>
-  <th style="width:56%">O que demonstra</th>
+  <th style="width:16%">Etapa</th><th style="width:21%">Classe de teste</th>
+  <th style="width:7%">Testes</th><th style="width:8%">UC</th><th style="width:48%">O que demonstra</th>
 </tr></thead>
 <tbody>
-<tr><td>CalibrationThresholdCalculatorTest</td><td>11</td><td>UC02</td><td>Limiar em 75 % do pico medido, mínimos de segurança por eixo e polaridade aprendida da câmera.</td></tr>
-<tr><td>CaptureQualityEvaluatorTest</td><td>18</td><td>UC02</td><td>Luz, enquadramento e número de rostos; iluminação tem prioridade sobre “rosto não detectado”.</td></tr>
-<tr><td>GestureClassifierTest</td><td>15</td><td>UC01</td><td>Cada gesto do vocabulário é classificado; piscada tem prioridade sobre pose.</td></tr>
-<tr><td>GestureDisplayNamesTest</td><td>9</td><td>UC03</td><td>Ida e volta entre rótulo e ação, e unicidade dos rótulos.</td></tr>
+<tr><td>1. Detectar o gesto</td><td>GestureClassifierTest</td><td>15</td><td>UC01</td><td>Cada um dos nove gestos do vocabulário é reconhecido; a piscada tem prioridade sobre a pose; a polaridade invertida da câmera frontal é respeitada.</td></tr>
+<tr><td>2. Calibrar por usuário</td><td>CalibrationThresholdCalculatorTest</td><td>11</td><td>UC02</td><td>Limiar em 75 % do pico medido, mínimo de segurança por eixo e polaridade aprendida — é o que adapta o sistema à amplitude de movimento de cada pessoa.</td></tr>
+<tr><td>3. Customizar o mapeamento</td><td>GestureConfigViewModelTest</td><td>11</td><td>UC03</td><td>Os nove gestos são listados, a troca altera só a linha informada, “sem ação” é persistido como nulo e “restaurar padrões” é delegado ao repositório.</td></tr>
+<tr><td>4. Gesto vira comando</td><td>PlayerAtivoViewModelTest</td><td>24</td><td>UC01</td><td><b>O fluxo central do produto:</b> o aceno toca e pausa, virar o rosto troca de faixa, inclinar ajusta o volume; gesto sem ação é ignorado; remapear em execução muda o comando disparado; 403 e 404 viram mensagem para o usuário.</td></tr>
 </tbody></table>
 
 

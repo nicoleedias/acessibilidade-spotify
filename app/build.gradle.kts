@@ -213,15 +213,20 @@ kover {
 }
 
 // Conjunto de demonstração: ./gradlew testDebugUnitTest -Pdemo
-// Seleciona só testes de lógica pura — sem coroutines, rede, banco ou dispositivo.
-// São os mais rápidos e determinísticos, pensados para execução ao vivo.
+// Cobre as quatro funcionalidades principais, uma por etapa da jornada do usuário.
+// Nenhum depende de rede, banco ou dispositivo — rodam na JVM e são determinísticos.
 tasks.withType<Test>().configureEach {
     if (project.hasProperty("demo")) {
         filter {
-            includeTestsMatching("*CalibrationThresholdCalculatorTest")
-            includeTestsMatching("*GestureDisplayNamesTest")
-            includeTestsMatching("*CaptureQualityEvaluatorTest")
+            // A jornada do produto, na ordem em que acontece.
+            // 1. detectar o gesto
             includeTestsMatching("*GestureClassifierTest")
+            // 2. calibrar a amplitude de cada usuário
+            includeTestsMatching("*CalibrationThresholdCalculatorTest")
+            // 3. customizar o mapeamento gesto→ação
+            includeTestsMatching("*GestureConfigViewModelTest")
+            // 4. o gesto vira comando no Spotify
+            includeTestsMatching("*PlayerAtivoViewModelTest")
         }
         // Lista cada teste na saída e ignora o cache: numa demonstração ao vivo,
         // "FROM-CACHE" não mostra nada e dá a impressão de que nada rodou.
