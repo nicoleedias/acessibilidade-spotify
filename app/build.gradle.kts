@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -187,4 +188,48 @@ dependencies {
     // Debug
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
+}
+
+// Cobertura de testes unitários (Kover).
+// Exclui código GERADO (Hilt, Room, Compose) — medir código que ninguém escreveu
+// infla o número e não diz nada sobre a qualidade dos testes.
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*_Factory", "*_Factory\$*",
+                    "*_HiltModules*", "*_HiltComponents*", "Hilt_*",
+                    "*_MembersInjector", "*_GeneratedInjector",
+                    "hilt_aggregated_deps.*", "dagger.hilt.*",
+                    "*_Impl", "*_Impl\$*",
+                    "*ComposableSingletons*",
+                    "*BuildConfig",
+                    "*ComposablePreview*",
+                )
+            }
+        }
+    }
+}
+
+// Conjunto de demonstração: ./gradlew testDebugUnitTest -Pdemo
+// Seleciona só testes de lógica pura — sem coroutines, rede, banco ou dispositivo.
+// São os mais rápidos e determinísticos, pensados para execução ao vivo.
+tasks.withType<Test>().configureEach {
+    if (project.hasProperty("demo")) {
+        filter {
+            includeTestsMatching("*CalibrationThresholdCalculatorTest")
+            includeTestsMatching("*GestureDisplayNamesTest")
+            includeTestsMatching("*CaptureQualityEvaluatorTest")
+            includeTestsMatching("*GestureClassifierTest")
+        }
+        // Lista cada teste na saída e ignora o cache: numa demonstração ao vivo,
+        // "FROM-CACHE" não mostra nada e dá a impressão de que nada rodou.
+        outputs.upToDateWhen { false }
+        testLogging {
+            events("passed", "failed")
+            showExceptions = true
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
+        }
+    }
 }

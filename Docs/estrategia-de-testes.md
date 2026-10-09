@@ -6,12 +6,14 @@ Documento de referência para a defesa: o que é testado, em que nível, com que
 
 | Campo | Valor |
 | --- | --- |
-| Última atualização | 25/09/2026 |
+| Última atualização | 09/10/2026 |
 | Testes unitários | **186** (JVM, sem dispositivo) |
 | Testes de integração | **33** (dispositivo/emulador) |
 | Testes funcionais | **51** (dispositivo/emulador) |
 | Teste de usabilidade | Protocolo em [testes-usabilidade.md](testes-usabilidade.md) + avaliação heurística (§6) |
 | **Total automatizado** | **270** |
+| Taxa de sucesso (unitários) | **100 %** (186/186) |
+| Cobertura de linhas | **71,4 %** no núcleo lógico · 22,0 % no aplicativo inteiro |
 
 ---
 
@@ -159,7 +161,7 @@ Declarar na defesa, com a justificativa:
 | `CalibrationViewModel` | Instancia `CalibrationPoseAnalyzer` (MediaPipe nativo) no `init`, e toda a máquina de estados é `private` | Cobertura indireta via `CalibrationThresholdCalculator` (11 testes) e `CalibrationRepositoryImpl` (8 testes). Testável após extrair um `CalibrationSession` puro para `domain/` |
 | `CalibrationScreen` | Dispara o diálogo de permissão de câmera num `LaunchedEffect`, que trava o teste instrumentado | Tarefa T2 do roteiro de usabilidade |
 | `GestureProcessor`, `CalibrationPoseAnalyzer` | MediaPipe nativo não carrega na JVM e exige câmera real | Tarefas T4 e T5 do roteiro de usabilidade |
-| Cobertura de código (JaCoCo/Kover) | Não configurada | Contagem por classe nesta tabela |
+
 
 ## 6. Avaliação heurística e melhorias identificadas
 
@@ -196,11 +198,20 @@ Consolidado dos quatro níveis. Prioridade pelo custo de não corrigir.
 | **M04** | Extrair um `CalibrationSession` puro para `domain/`, tornando a máquina de estados da calibração testável na JVM | Lacuna §5 | Média |
 | **M09** | Levar o feedback de iluminação para a tela de rastreamento — hoje só existe na calibração, mas a luz cai igual durante o uso | Cobertura | Média |
 | **M05** | Cobrir `SpotifyAuthInterceptor` (401 → refresh, 429 → `Retry-After`); exigiria MockWebServer | Lacuna §5 | Baixa |
-| **M06** | Configurar cobertura de código (JaCoCo ou Kover) para substituir a contagem manual por classe | Lacuna §5 | Baixa |
+| ~~M06~~ | ~~Configurar cobertura de código~~ — **resolvido em 09/10/2026**: Kover 0.9.1, excluindo código gerado. `./gradlew koverHtmlReportDebug` | Lacuna §5 | Concluída |
 
 M08 é a mais séria: não é um defeito encontrado por teste, e sim um requisito declarado no próprio projeto que nenhum teste cobria porque a funcionalidade não foi implementada. Foi a avaliação cruzada entre o roteiro de usabilidade e o código que expôs a lacuna — um argumento concreto, para a defesa, de por que os quatro níveis não se substituem.
 
 ## 7. Como executar
+
+```bash
+# Cobertura (Kover) — relatório em app/build/reports/kover/htmlDebug/index.html
+./gradlew koverHtmlReportDebug
+
+# Conjunto de demonstração: 53 testes de lógica pura, ~7 s, listados um a um
+./gradlew testDebugUnitTest -Pdemo
+```
+
 
 ```bash
 # Gate obrigatório antes de qualquer merge
