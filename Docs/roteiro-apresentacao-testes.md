@@ -1,153 +1,79 @@
-# Roteiro de apresentação dos testes — Nodify
+# Apresentação dos testes — Nodify
 
-Guia para rodar os testes ao vivo e mostrar o código correspondente.
-Cada etapa traz **o arquivo de teste**, **o arquivo testado** e **o trecho a abrir na tela**.
+## 1. O que você precisa
+
+| | |
+| --- | --- |
+| Notebook com o projeto aberto | `C:\Users\pedro\acessibilidade-spotify` |
+| Terminal | Git Bash ou PowerShell, na pasta do projeto |
+| Internet | **Não** — as dependências já estão em cache |
+| Celular / emulador | **Não** — os testes rodam na JVM |
+| Spotify aberto | **Não** |
+
+Só o notebook. Nada mais.
 
 ---
 
-## Antes de começar
+## 2. Comandos
+
+**Antes de apresentar** (faça em casa, uma vez — demora ~1 minuto porque compila):
 
 ```bash
 cd C:\Users\pedro\acessibilidade-spotify
 ./gradlew testDebugUnitTest -Pdemo
 ```
 
-**61 testes · 4 classes · ~10 segundos · 100 % de sucesso.**
+**Na frente do professor** (~11 segundos):
 
-Cada teste aparece na tela com o nome por extenso, em português. O conjunto ignora o cache do
-Gradle de propósito: sem isso o build responderia `FROM-CACHE` e pareceria que nada rodou.
-
-> **Rode uma vez antes de apresentar**, com o projeto já aberto. A primeira execução do dia compila
-> o projeto e leva ~25 s; as seguintes levam ~10 s.
-
-> **Não rode `connectedAndroidTest`.** Os 84 testes instrumentados exigem celular conectado e
-> falham na hora sem aparelho.
-
----
-
-## A narrativa: quatro etapas da jornada do usuário
-
-| # | Etapa | Classe de teste | Testes | UC |
-| --- | --- | --- | --- | --- |
-| 1 | Detectar o gesto | `GestureClassifierTest` | 15 | UC01 |
-| 2 | Calibrar a amplitude | `CalibrationThresholdCalculatorTest` | 11 | UC02 |
-| 3 | Customizar o mapeamento | `GestureConfigViewModelTest` | 11 | UC03 |
-| 4 | **O gesto vira comando** | `PlayerAtivoViewModelTest` | 24 | UC01 |
-
----
-
-## Etapa 1 — Detectar o gesto
-
-| | |
-| --- | --- |
-| **Arquivo de teste** | `app/src/test/java/com/sac/acessibilidade/vision/GestureClassifierTest.kt` (211 linhas) |
-| **Código testado** | `app/src/main/java/com/sac/acessibilidade/vision/GestureClassifier.kt` (81 linhas) |
-| **Apoio** | `domain/gesture/Gesture.kt` · `domain/gesture/CalibrationThresholds.kt` |
-
-**Trecho para mostrar — `GestureClassifier.kt`, linhas 19–30:**
-
-```kotlin
-fun classify(
-    landmarks: List<NormalizedLandmark>,
-    blendshapes: List<Category>?,
-    thresholds: CalibrationThresholds,
-): Gesture? {
-    // Piscar tem prioridade — é intencional e não ambíguo com gestos de cabeça
-    val blinkGesture = classifyBlink(blendshapes, thresholds.blinkThreshold)
-    if (blinkGesture != null) return blinkGesture
-
-    val pose = HeadPoseEstimator.estimate(landmarks) ?: return null
-    return classifyHeadPose(pose, thresholds)
-}
+```bash
+./gradlew testDebugUnitTest -Pdemo
 ```
 
-**O que dizer:** a classe não conhece câmera nem MediaPipe — recebe pontos do rosto e limiares, e
-devolve um gesto. É isso que permite testá-la na JVM, sem celular.
+O mesmo comando. Depois de compilado, roda em 11s e lista os 61 testes um a um na tela.
 
-**Testes que aparecem na tela:**
-- `detecta TILT_HEAD_RIGHT quando o usuario inclina para a direita`
-- `piscada tem prioridade sobre gesto de cabeca`
-- `polaridade invertida classifica TILT_HEAD_RIGHT com roll negativo`
+Resultado esperado no final:
 
-**Se perguntarem sobre a polaridade invertida:** a câmera frontal espelha a imagem, e o sinal do
-eixo muda de aparelho para aparelho. Em vez de fixar no código, o sistema aprende o sinal durante a
-calibração — e há teste para as duas polaridades.
-
----
-
-## Etapa 2 — Calibrar a amplitude de cada usuário
-
-| | |
-| --- | --- |
-| **Arquivo de teste** | `app/src/test/java/com/sac/acessibilidade/domain/gesture/CalibrationThresholdCalculatorTest.kt` (133 linhas) |
-| **Código testado** | `app/src/main/java/com/sac/acessibilidade/domain/gesture/CalibrationThresholdCalculator.kt` (86 linhas) |
-| **Apoio** | `domain/gesture/CalibrationThresholds.kt` |
-
-**Trecho para mostrar — `CalibrationThresholdCalculator.kt`, linhas 60 e 74:**
-
-```kotlin
-): Float = (abs(signedPeak) * THRESHOLD_RATIO).coerceAtLeast(minimum)
-
-const val THRESHOLD_RATIO = 0.75f
+```
+BUILD SUCCESSFUL
 ```
 
-**O que dizer:** o limiar fica em 75 % do movimento máximo que a pessoa conseguiu fazer. Quem tem
-pouca amplitude não precisa repetir o esforço máximo para o app reconhecer o gesto — é o núcleo da
-acessibilidade do projeto. O `coerceAtLeast` garante um mínimo de segurança por eixo, senão um
-movimento involuntário dispararia comando.
+### Se ele pedir a suíte completa
 
-**Testes que aparecem na tela:**
-- `aplica 75 por cento da magnitude do pico medido`
-- `respeita o minimo de seguranca quando o pico e pequeno`
-- `polaridade negativa quando o estimador inverte o eixo`
-
----
-
-## Etapa 3 — Customizar o mapeamento gesto → ação
-
-| | |
-| --- | --- |
-| **Arquivo de teste** | `app/src/test/java/com/sac/acessibilidade/ui/screens/GestureConfigViewModelTest.kt` (223 linhas) |
-| **Código testado** | `app/src/main/java/com/sac/acessibilidade/ui/screens/GestureConfigViewModel.kt` (95 linhas) |
-| **Apoio** | `domain/gesture/GestureMappingRepository.kt` · `domain/gesture/GestureDisplayNames.kt` |
-
-**Trecho para mostrar — `GestureConfigViewModel.kt`, linhas 56–67:**
-
-```kotlin
-fun save(onDone: () -> Unit) {
-    viewModelScope.launch {
-        _uiState.update { it.copy(isSaving = true) }
-        val domainMap =
-            _uiState.value.mappings.associate { item ->
-                item.gesture to item.selectedAction.toSpotifyActionOrNull()
-            }
-        repository.saveMappings(domainMap)
-        _uiState.update { it.copy(isSaving = false) }
-        onDone()
-    }
-}
+```bash
+./gradlew test
 ```
 
-**O que dizer:** o usuário escolhe qual gesto dispara qual comando. Isso não é conveniência: um
-usuário que não consegue virar o rosto para a esquerda pode mapear esse comando para outro gesto.
-Citar a **WCAG 2.1 SC 2.5.6** se perguntarem a justificativa.
+186 testes, ~4 segundos.
 
-**Testes que aparecem na tela:**
-- `atualizar mapeamento altera apenas a linha do gesto informado`
-- `salvar converte sem acao em nulo`
-- `restaurar padroes delega ao repositorio`
+### Se ele pedir a cobertura
+
+```bash
+./gradlew koverHtmlReportDebug
+start app\build\reports\kover\htmlDebug\index.html
+```
 
 ---
 
-## Etapa 4 — O gesto vira comando no Spotify  ← **o ponto alto**
+## 3. O que está sendo testado
 
-| | |
-| --- | --- |
-| **Arquivo de teste** | `app/src/test/java/com/sac/acessibilidade/ui/screens/PlayerAtivoViewModelTest.kt` (485 linhas) |
-| **Código testado** | `app/src/main/java/com/sac/acessibilidade/ui/screens/PlayerAtivoViewModel.kt` (192 linhas) |
-| **Apoio** | `spotify/player/SpotifyCommandRepository.kt` · `spotify/player/SpotifyPlayerRepository.kt` · `vision/GestureProcessor.kt` |
+61 testes, 4 classes, uma por etapa do produto:
 
-**Trecho para mostrar — `PlayerAtivoViewModel.kt`, linhas 57–65:**
+| # | Etapa | Arquivo de teste | Arquivo testado |
+| --- | --- | --- | --- |
+| 1 | Detectar o gesto | `GestureClassifierTest.kt` | `vision/GestureClassifier.kt` |
+| 2 | Calibrar o usuário | `CalibrationThresholdCalculatorTest.kt` | `domain/gesture/CalibrationThresholdCalculator.kt` |
+| 3 | Customizar mapeamento | `GestureConfigViewModelTest.kt` | `ui/screens/GestureConfigViewModel.kt` |
+| 4 | **Gesto vira comando** | `PlayerAtivoViewModelTest.kt` | `ui/screens/PlayerAtivoViewModel.kt` |
+
+Caminhos completos:
+- testes → `app/src/test/java/com/sac/acessibilidade/…`
+- código → `app/src/main/java/com/sac/acessibilidade/…`
+
+---
+
+## 4. O código para mostrar
+
+Abra **`app/src/main/java/com/sac/acessibilidade/ui/screens/PlayerAtivoViewModel.kt`**, linha 57:
 
 ```kotlin
 private fun collectGestures() {
@@ -161,67 +87,40 @@ private fun collectGestures() {
 }
 ```
 
-**O que dizer — abrir essa linha e apontar:**
+**Aponte a linha 60** e diga:
 
-```kotlin
-val action = currentMapping[gesture] ?: return@collect
-```
+> "A ação vem do mapa carregado do banco, não do código. Se o gesto não tem ação, sai em silêncio.
+> É isso que permite o usuário usar só os gestos que ele consegue fazer."
 
-São oito palavras que sustentam a regra mais importante do projeto: **não existe mapeamento fixo no
-código**. A ação vem do mapa carregado do banco. E o `?: return@collect` é o gesto sem ação
-mapeada: sai em silêncio, sem disparar nada.
-
-**Testes que aparecem na tela:**
-- `aceno dispara tocar quando esta pausado`
-- `virar rosto a direita avanca a faixa`
-- `inclinar a direita aumenta o volume em cinco`
-- `gesto sem acao mapeada e ignorado`
+Os testes que provam essa linha aparecem na tela quando você roda:
 - `mapeamento customizado do usuario e respeitado`
 - `remapeamento em tempo de execucao muda o comando disparado`
-- `volume satura em cem`
-- `falha de comando vira mensagem de erro na tela`
-
-Os três do meio são a prova direta: o comando sai do banco, e trocar o mapeamento **durante a
-execução** muda o comando disparado.
+- `gesto sem acao mapeada e ignorado`
 
 ---
 
-## Perguntas prováveis
+## 5. Perguntas prováveis
 
-**"Como vocês testam sem celular?"**
-As camadas de regra de negócio não importam nada de Android. O `GestureClassifier` recebe números
-e devolve um gesto; o `PlayerAtivoViewModel` recebe repositórios por construtor, substituídos por
-simulações nos testes. Por isso os 186 testes rodam na JVM em menos de 4 segundos.
-
-**"E a interface, não é testada?"**
-É, por 51 testes de Compose UI Test, mais 33 de integração com banco e Keystore. São 84 testes que
-exigem aparelho ou emulador conectado — estão implementados e compilam, mas não rodam aqui.
+**"Como testam sem celular?"**
+A camada de regra de negócio não importa nada de Android. O classificador recebe números e devolve
+um gesto; o ViewModel recebe os repositórios por construtor, substituídos por simulações no teste.
 
 **"Qual a cobertura?"**
-22 % do aplicativo inteiro, 71,4 % do núcleo lógico. A diferença são 1.300 linhas de Compose, que
-descrevem a tela e não têm lógica para testar. As camadas de domínio, dados, integração com o
-Spotify e os quatro ViewModels estão em **100 %**. Relatório:
-`./gradlew koverHtmlReportDebug`
+71,4 % do núcleo lógico, 22 % do app inteiro. A diferença são 1.300 linhas de Compose, que descrevem
+a tela e não têm lógica. Domínio, dados, integração com o Spotify e os 4 ViewModels estão em 100 %.
+
+**"E a interface, é testada?"**
+Sim — 51 testes de Compose UI Test e 33 de integração. Mas precisam de celular conectado e ainda não
+foram executados. Está declarado na seção 5.3 do documento.
 
 **"Por que MockK e não Mockito?"**
 Classes Kotlin são `final` por padrão; o Mockito precisaria de configuração extra. O MockK também
-simula função `suspend` sem adaptação, e aqui isso é a regra.
+simula função `suspend` sem adaptação.
 
 ---
 
-## Comandos de apoio
+## 6. Não faça
 
-```bash
-# Suíte completa — 186 testes
-./gradlew test
+❌ **`./gradlew connectedAndroidTest`** — precisa de celular conectado. Falha na hora.
 
-# Relatório visual de testes
-start app\build\reports\tests\testDebugUnitTest\index.html
-
-# Relatório de cobertura
-./gradlew koverHtmlReportDebug
-start app\build\reports\kover\htmlDebug\index.html
-
-# Portão de qualidade completo
-./gradlew ktlintCheck detekt test
-```
+❌ Não rode pela primeira vez na frente dele. Compila e demora 1 minuto.
