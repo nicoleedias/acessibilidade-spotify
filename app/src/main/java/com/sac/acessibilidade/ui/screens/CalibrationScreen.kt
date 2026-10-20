@@ -6,6 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedContent
@@ -49,6 +51,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +86,8 @@ import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
 import com.sac.acessibilidade.vision.CalibrationPoseAnalyzer
 import com.sac.acessibilidade.vision.CaptureIssue
+import java.util.concurrent.Executors
+import android.util.Size as AndroidSize
 import androidx.camera.core.Preview as CameraPreviewUseCase
 
 // Vermelho escuro com texto branco: 5.9:1. Âmbar com texto quase preto: 11:1.
@@ -596,6 +601,9 @@ private fun CameraPreview(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Análise fora da main thread — ver nota em PlayerAtivoScreen.
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+    DisposableEffect(Unit) { onDispose { analysisExecutor.shutdown() } }
     AndroidView(
         factory = { ctx ->
             PreviewView(ctx).apply {
@@ -614,9 +622,10 @@ private fun CameraPreview(
                             if (analyzer != null) {
                                 val imageAnalysis =
                                     ImageAnalysis.Builder()
+                                        .setResolutionSelector(calibrationAnalysisResolution())
                                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                         .build()
-                                        .also { it.setAnalyzer(ContextCompat.getMainExecutor(ctx), analyzer) }
+                                        .also { it.setAnalyzer(analysisExecutor, analyzer) }
                                 provider.bindToLifecycle(
                                     lifecycleOwner,
                                     CameraSelector.DEFAULT_FRONT_CAMERA,
@@ -639,6 +648,20 @@ private fun CameraPreview(
         modifier = modifier,
     )
 }
+
+/** Mesma redução de resolução usada no rastreamento. */
+private fun calibrationAnalysisResolution(): ResolutionSelector =
+    ResolutionSelector.Builder()
+        .setResolutionStrategy(
+            ResolutionStrategy(
+                AndroidSize(CALIBRATION_ANALYSIS_WIDTH, CALIBRATION_ANALYSIS_HEIGHT),
+                ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER,
+            ),
+        )
+        .build()
+
+private const val CALIBRATION_ANALYSIS_WIDTH = 480
+private const val CALIBRATION_ANALYSIS_HEIGHT = 360
 
 private fun instructionFor(step: CalibrationStep): String =
     when (step) {

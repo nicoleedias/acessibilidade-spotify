@@ -45,6 +45,15 @@ class GestureProcessor
 
         private var faceLandmarker: FaceLandmarker? = null
         private var lastGestureMs = 0L
+
+        /**
+         * Limiares em cache. Antes eram relidos do disco a cada frame — onze buscas
+         * em SharedPreferences e um objeto novo por quadro, trinta vezes por segundo.
+         * São recarregados em [resetBaseline], chamado sempre que o rastreamento começa,
+         * então uma recalibração continua sendo refletida.
+         */
+        @Volatile
+        private var cachedThresholds: CalibrationThresholds? = null
         private val nodDetector = NodDetector()
         private val stabilizer = HeadGestureStabilizer()
 
@@ -75,6 +84,7 @@ class GestureProcessor
             stabilizer.reset()
             nodDetector.reset()
             lastGestureMs = 0L
+            cachedThresholds = calibrationRepository.getThresholds()
         }
 
         override fun analyze(imageProxy: ImageProxy) {
@@ -97,7 +107,9 @@ class GestureProcessor
         private fun onResult(result: FaceLandmarkerResult) {
             if (result.faceLandmarks().isEmpty()) return
             val now = SystemClock.uptimeMillis()
-            val thresholds = calibrationRepository.getThresholds()
+            val thresholds =
+                cachedThresholds
+                    ?: calibrationRepository.getThresholds().also { cachedThresholds = it }
             val detected = detectGesture(result, thresholds, now)
             if (detected != null) {
                 lastGestureMs = now

@@ -1,7 +1,10 @@
 package com.sac.acessibilidade.ui.screens
 
+import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.RepeatMode
@@ -41,7 +44,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -72,6 +77,7 @@ import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
 import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
 import com.sac.acessibilidade.vision.GestureProcessor
+import java.util.concurrent.Executors
 import androidx.camera.core.Preview as CameraPreviewUseCase
 
 @Suppress("LongParameterList")
@@ -227,6 +233,11 @@ private fun GestureCamera(
     modifier: Modifier = Modifier,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Thread própria para a análise. Na main thread, a conversão do frame competia
+    // com a renderização do Compose e do preview: com KEEP_ONLY_LATEST, os frames
+    // atrasados são descartados, e o gesto precisa de 2 frames seguidos para valer.
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+    DisposableEffect(Unit) { onDispose { analysisExecutor.shutdown() } }
     AndroidView(
         factory = { ctx ->
             PreviewView(ctx).apply {
@@ -242,9 +253,10 @@ private fun GestureCamera(
                                     .also { it.setSurfaceProvider(surfaceProvider) }
                             val imageAnalysis =
                                 ImageAnalysis.Builder()
+                                    .setResolutionSelector(analysisResolution())
                                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                     .build()
-                                    .also { it.setAnalyzer(ContextCompat.getMainExecutor(ctx), gestureProcessor) }
+                                    .also { it.setAnalyzer(analysisExecutor, gestureProcessor) }
                             provider.unbindAll()
                             provider.bindToLifecycle(
                                 lifecycleOwner,
@@ -261,6 +273,24 @@ private fun GestureCamera(
         modifier = modifier,
     )
 }
+
+/**
+ * Resolução de análise reduzida. O detector facial reamostra a entrada internamente,
+ * então o quadro maior do padrão (640×480) só encarecia a conversão e a rotação do
+ * bitmap a cada frame, sem melhorar a detecção.
+ */
+private fun analysisResolution(): ResolutionSelector =
+    ResolutionSelector.Builder()
+        .setResolutionStrategy(
+            ResolutionStrategy(
+                Size(ANALYSIS_WIDTH, ANALYSIS_HEIGHT),
+                ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER,
+            ),
+        )
+        .build()
+
+private const val ANALYSIS_WIDTH = 480
+private const val ANALYSIS_HEIGHT = 360
 
 @Composable
 private fun CameraFeedPlaceholder() {
