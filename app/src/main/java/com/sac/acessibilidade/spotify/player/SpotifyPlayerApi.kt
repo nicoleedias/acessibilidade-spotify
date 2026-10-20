@@ -1,6 +1,8 @@
 package com.sac.acessibilidade.spotify.player
 
 import com.sac.acessibilidade.spotify.player.model.CurrentlyPlayingResponse
+import com.sac.acessibilidade.spotify.player.model.PlaylistTracksResponse
+import com.sac.acessibilidade.spotify.player.model.PlaylistsResponse
 import com.sac.acessibilidade.spotify.player.model.UserProfileResponse
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -8,11 +10,23 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface SpotifyPlayerApi {
     @GET("me")
     suspend fun getUserProfile(): Response<UserProfileResponse>
+
+    @GET("me/playlists")
+    suspend fun getPlaylists(
+        @Query("limit") limit: Int = 50,
+    ): Response<PlaylistsResponse>
+
+    @GET("playlists/{id}/tracks")
+    suspend fun getPlaylistTracks(
+        @Path("id") playlistId: String,
+        @Query("limit") limit: Int = 50,
+    ): Response<PlaylistTracksResponse>
 
     @GET("me/player/currently-playing")
     suspend fun getCurrentlyPlaying(): Response<CurrentlyPlayingResponse>

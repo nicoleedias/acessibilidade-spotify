@@ -25,13 +25,18 @@ data class ArtistItem(
 data class AlbumItem(
     @SerialName("images") val images: List<AlbumImage> = emptyList(),
 ) {
-    fun bestImageUrl(targetWidth: Int = 300): String? =
-        images
-            .filter { it.width != null }
-            .minByOrNull { kotlin.math.abs((it.width ?: 0) - targetWidth) }
-            ?.url
-            ?: images.firstOrNull()?.url
+    fun bestImageUrl(targetWidth: Int = 300): String? = images.bestUrl(targetWidth)
 }
+
+/**
+ * Capa de resolução mais próxima da desejada. Baixar sempre a maior desperdiça
+ * banda num app que já ocupa a CPU com visão computacional.
+ */
+fun List<AlbumImage>.bestUrl(targetWidth: Int = 300): String? =
+    filter { it.width != null }
+        .minByOrNull { kotlin.math.abs((it.width ?: 0) - targetWidth) }
+        ?.url
+        ?: firstOrNull()?.url
 
 @Serializable
 data class AlbumImage(
