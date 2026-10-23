@@ -2,14 +2,18 @@ package com.sac.acessibilidade.ui.screens
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.sac.acessibilidade.domain.gesture.Gesture
 import com.sac.acessibilidade.domain.gesture.NO_ACTION_LABEL
@@ -68,6 +72,20 @@ class GestureConfigScreenTest {
         }
     }
 
+    /**
+     * A tela usa LazyColumn: item fora da área visível não é composto e nem sequer
+     * existe na árvore de semântica, então `performScrollTo()` não o encontra.
+     * É preciso pedir à lista que role até ele, o que o compõe.
+     */
+    private fun rolarAte(matcher: SemanticsMatcher) {
+        composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(matcher)
+    }
+
+    private fun descricaoDoSeletor(
+        gesture: Gesture,
+        acao: String,
+    ) = "Ação para ${gesture.displayName()}: $acao. Toque para alterar"
+
     // ── Renderização ────────────────────────────────────────────────────────
 
     @Test
@@ -75,10 +93,8 @@ class GestureConfigScreenTest {
         montarTela()
 
         Gesture.entries.forEach { gesture ->
-            composeRule
-                .onNodeWithText(gesture.displayName())
-                .performScrollTo()
-                .assertIsDisplayed()
+            rolarAte(hasText(gesture.displayName()))
+            composeRule.onNodeWithText(gesture.displayName()).assertIsDisplayed()
         }
     }
 
@@ -86,22 +102,20 @@ class GestureConfigScreenTest {
     fun exibeAAcaoMapeadaDeCadaGesto() {
         montarTela()
 
-        composeRule
-            .onNodeWithContentDescription(
-                "Ação para ${Gesture.NOD.displayName()}: ${SpotifyAction.PLAY_PAUSE.displayName()}. Toque para alterar",
-            ).performScrollTo()
-            .assertIsDisplayed()
+        val descricao = descricaoDoSeletor(Gesture.NOD, SpotifyAction.PLAY_PAUSE.displayName())
+        rolarAte(hasContentDescription(descricao))
+
+        composeRule.onNodeWithContentDescription(descricao).assertIsDisplayed()
     }
 
     @Test
     fun gestoSemAcaoExibeORotuloDeSemAcao() {
         montarTela()
 
-        composeRule
-            .onNodeWithContentDescription(
-                "Ação para ${Gesture.BLINK_LEFT_EYE.displayName()}: $NO_ACTION_LABEL. Toque para alterar",
-            ).performScrollTo()
-            .assertIsDisplayed()
+        val descricao = descricaoDoSeletor(Gesture.BLINK_LEFT_EYE, NO_ACTION_LABEL)
+        rolarAte(hasContentDescription(descricao))
+
+        composeRule.onNodeWithContentDescription(descricao).assertIsDisplayed()
     }
 
     // ── Edição do mapeamento ────────────────────────────────────────────────
@@ -112,16 +126,13 @@ class GestureConfigScreenTest {
         montarTela(onMappingChanged = { g, a -> recebidos += g to a })
 
         // Abre o seletor do gesto "Aceno (sim)"
-        composeRule
-            .onNodeWithContentDescription(
-                "Ação para ${Gesture.NOD.displayName()}: ${SpotifyAction.PLAY_PAUSE.displayName()}. Toque para alterar",
-            ).performScrollTo()
-            .performClick()
+        val descricao = descricaoDoSeletor(Gesture.NOD, SpotifyAction.PLAY_PAUSE.displayName())
+        rolarAte(hasContentDescription(descricao))
+        composeRule.onNodeWithContentDescription(descricao).performClick()
 
-        // Escolhe "Próxima Faixa" na lista aberta
+        // Escolhe "Próxima Faixa" no menu aberto — o menu já está visível, não rola
         composeRule
             .onNodeWithContentDescription(SpotifyAction.NEXT_TRACK.displayName())
-            .performScrollTo()
             .performClick()
 
         assertEquals(1, recebidos.size)
@@ -136,16 +147,11 @@ class GestureConfigScreenTest {
         val recebidos = mutableListOf<Pair<Gesture, String>>()
         montarTela(onMappingChanged = { g, a -> recebidos += g to a })
 
-        composeRule
-            .onNodeWithContentDescription(
-                "Ação para ${Gesture.NOD.displayName()}: ${SpotifyAction.PLAY_PAUSE.displayName()}. Toque para alterar",
-            ).performScrollTo()
-            .performClick()
+        val descricao = descricaoDoSeletor(Gesture.NOD, SpotifyAction.PLAY_PAUSE.displayName())
+        rolarAte(hasContentDescription(descricao))
+        composeRule.onNodeWithContentDescription(descricao).performClick()
 
-        composeRule
-            .onNodeWithContentDescription(NO_ACTION_LABEL)
-            .performScrollTo()
-            .performClick()
+        composeRule.onNodeWithContentDescription(NO_ACTION_LABEL).performClick()
 
         assertEquals(NO_ACTION_LABEL, recebidos.single().second)
     }

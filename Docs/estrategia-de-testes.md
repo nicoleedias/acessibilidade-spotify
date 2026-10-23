@@ -204,6 +204,33 @@ M08 é a mais séria: não é um defeito encontrado por teste, e sim um requisit
 
 ## 7. Como executar
 
+### Antes de rodar os testes instrumentados
+
+Eles exigem aparelho conectado **com a tela acesa e desbloqueada**. Com a tela
+apagada nenhuma Activity sobe, não existe hierarquia Compose para inspecionar, e
+todos os testes de interface falham com `No compose hierarchies found` — um erro
+que parece defeito do app e não é. As animações do sistema também precisam estar
+desligadas, senão as asserções disputam com as transições.
+
+```bash
+adb shell input keyevent KEYCODE_WAKEUP      # acorda a tela
+adb shell svc power stayon usb               # mantém acesa enquanto no USB
+adb shell settings put global window_animation_scale 0
+adb shell settings put global transition_animation_scale 0
+adb shell settings put global animator_duration_scale 0
+```
+
+Para devolver o aparelho ao normal depois, repita os três últimos comandos com
+`1` no lugar de `0`.
+
+Em caso de falha em massa nos testes de interface, rode primeiro
+`ComposeSmokeTest`: ele renderiza um único texto e separa defeito de produto de
+defeito de ambiente.
+
+```bash
+./gradlew connectedDebugAndroidTest   -Pandroid.testInstrumentationRunnerArguments.class=com.sac.acessibilidade.smoke.ComposeSmokeTest
+```
+
 ```bash
 # Cobertura (Kover) — relatório em app/build/reports/kover/htmlDebug/index.html
 ./gradlew koverHtmlReportDebug

@@ -431,7 +431,7 @@ private fun NowPlayingCard(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        IconButton(onClick = onPlayPauseClick) {
+        IconButton(onClick = onPlayPauseClick, modifier = Modifier.size(TOUCH_TARGET)) {
             Icon(
                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                 contentDescription = if (isPlaying) pauseDesc else playDesc,
@@ -460,13 +460,13 @@ private fun PlaybackControlsRow(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onSkipPreviousClick) {
+        IconButton(onClick = onSkipPreviousClick, modifier = Modifier.size(TOUCH_TARGET)) {
             Icon(Icons.Default.SkipPrevious, contentDescription = "Faixa anterior", tint = TextPrimary)
         }
-        IconButton(onClick = onSkipNextClick) {
+        IconButton(onClick = onSkipNextClick, modifier = Modifier.size(TOUCH_TARGET)) {
             Icon(Icons.Default.SkipNext, contentDescription = "Próxima faixa", tint = TextPrimary)
         }
-        IconButton(onClick = onVolumeDownClick) {
+        IconButton(onClick = onVolumeDownClick, modifier = Modifier.size(TOUCH_TARGET)) {
             Icon(Icons.Default.VolumeDown, contentDescription = "Volume -5", tint = TextPrimary)
         }
         Text(
@@ -474,11 +474,18 @@ private fun PlaybackControlsRow(
             style = MaterialTheme.typography.labelSmall,
             color = TextMuted,
         )
-        IconButton(onClick = onVolumeUpClick) {
+        IconButton(onClick = onVolumeUpClick, modifier = Modifier.size(TOUCH_TARGET)) {
             Icon(Icons.Default.VolumeUp, contentDescription = "Volume +5", tint = TextPrimary)
         }
     }
 }
+
+/**
+ * O IconButton do Material 3 mede 40dp de área visível. O Android expande o alvo
+ * de toque para 48dp por baixo, mas aqui o que vale é o alvo VISÍVEL: o usuário
+ * tem limitação motora e precisa enxergar onde tocar, não adivinhar.
+ */
+private val TOUCH_TARGET = 48.dp
 
 @Suppress("UnusedPrivateMember")
 @Preview(showSystemUi = true, backgroundColor = 0xFF121212)

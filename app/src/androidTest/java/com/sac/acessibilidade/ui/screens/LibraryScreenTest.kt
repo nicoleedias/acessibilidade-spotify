@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.sac.acessibilidade.spotify.player.model.AlbumImage
 import com.sac.acessibilidade.spotify.player.model.PlaylistItem
 import com.sac.acessibilidade.spotify.player.model.PlaylistTrack
 import com.sac.acessibilidade.spotify.player.model.PlaylistTracksRef
@@ -252,10 +253,28 @@ class LibraryScreenTest {
 
     @Test
     fun aCapaTemDescricaoParaLeitorDeTela() {
-        render(estadoComPlaylists)
+        val comCapa =
+            playlist("a", "Foco Total").copy(
+                images = listOf(AlbumImage(url = "https://exemplo/capa.jpg", width = 300, height = 300)),
+            )
+        render(LibraryUiState(playlists = listOf(comCapa), isLoading = false))
 
         assertEquals(
             1,
+            composeRule.onAllNodesWithContentDescription("Capa").fetchSemanticsNodes().size,
+        )
+    }
+
+    /**
+     * Playlist sem capa cai no ícone genérico, que é decorativo: anunciá-lo ao
+     * leitor de tela só acrescentaria ruído, já que o nome vem logo abaixo.
+     */
+    @Test
+    fun playlistSemCapaNaoAnunciaImagemAoLeitorDeTela() {
+        render(estadoComPlaylists)
+
+        assertEquals(
+            0,
             composeRule.onAllNodesWithContentDescription("Capa").fetchSemanticsNodes().size,
         )
     }
