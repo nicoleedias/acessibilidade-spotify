@@ -57,9 +57,13 @@ class CalibrationPoseAnalyzer(private val context: Context) : ImageAnalysis.Anal
                     // bloquear a calibração (regra de um rosto por conta, UC02). Com
                     // numFaces=1 o segundo rosto seria silenciosamente ignorado.
                     .setNumFaces(MAX_TRACKED_FACES)
-                    .setMinFaceDetectionConfidence(0.5f)
-                    .setMinFacePresenceConfidence(0.5f)
-                    .setMinTrackingConfidence(0.5f)
+                    // 0.4 em vez do padrão 0.5: aceita o rosto parcialmente encoberto
+                    // por óculos, touca, franja ou barba. O que impede falso positivo
+                    // aqui não é a confiança do detector, e sim o estabilizador —
+                    // baseline, sustain de 2 quadros e histerese de re-arme.
+                    .setMinFaceDetectionConfidence(0.4f)
+                    .setMinFacePresenceConfidence(0.4f)
+                    .setMinTrackingConfidence(0.4f)
                     .setOutputFaceBlendshapes(false)
                     .setResultListener { result, _ ->
                         // Mesma fonte de pose do GestureProcessor — calibração e runtime

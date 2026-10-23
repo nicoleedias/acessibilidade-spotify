@@ -7,6 +7,7 @@ import android.os.SystemClock
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mediapipe.framework.image.BitmapImageBuilder
+import com.google.mediapipe.tasks.components.containers.Category
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
@@ -16,8 +17,11 @@ import com.sac.acessibilidade.domain.gesture.CalibrationThresholds
 import com.sac.acessibilidade.domain.gesture.Gesture
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -56,6 +60,15 @@ class GestureProcessor
         private var cachedThresholds: CalibrationThresholds? = null
         private val nodDetector = NodDetector()
         private val stabilizer = HeadGestureStabilizer()
+        private val blinkMonitor = BlinkReliabilityMonitor()
+
+        /**
+         * Falso quando o olho está encoberto — tipicamente óculos escuros — e a
+         * piscada deixou de ser utilizável. A tela avisa, em vez de deixar o
+         * usuário repetindo um gesto que nunca vai disparar.
+         */
+        private val _blinkReliable = MutableStateFlow(true)
+        val blinkReliable: StateFlow<Boolean> = _blinkReliable.asStateFlow()
 
         fun initialize() {
             if (faceLandmarker != null) return
@@ -68,9 +81,13 @@ class GestureProcessor
                         )
                         .setRunningMode(RunningMode.LIVE_STREAM)
                         .setNumFaces(1)
-                        .setMinFaceDetectionConfidence(0.5f)
-                        .setMinFacePresenceConfidence(0.5f)
-                        .setMinTrackingConfidence(0.5f)
+                        // 0.4 em vez do padrão 0.5: aceita o rosto parcialmente encoberto
+                        // por óculos, touca, franja ou barba. O que impede falso positivo
+                        // aqui não é a confiança do detector, e sim o estabilizador —
+                        // baseline, sustain de 2 quadros e histerese de re-arme.
+                        .setMinFaceDetectionConfidence(0.4f)
+                        .setMinFacePresenceConfidence(0.4f)
+                        .setMinTrackingConfidence(0.4f)
                         .setOutputFaceBlendshapes(true)
                         .setResultListener { result, _ -> onResult(result) }
                         .setErrorListener { _ -> }
@@ -83,6 +100,8 @@ class GestureProcessor
         fun resetBaseline() {
             stabilizer.reset()
             nodDetector.reset()
+            blinkMonitor.reset()
+            _blinkReliable.value = true
             lastGestureMs = 0L
             cachedThresholds = calibrationRepository.getThresholds()
         }
@@ -110,15 +129,25 @@ class GestureProcessor
             val thresholds =
                 cachedThresholds
                     ?: calibrationRepository.getThresholds().also { cachedThresholds = it }
-            val detected = detectGesture(result, thresholds, now)
+            val blendshapes = blendshapesOf(result)
+            _blinkReliable.value = blinkMonitor.observe(GestureClassifier.maxBlinkScore(blendshapes))
+            val detected = detectGesture(result, blendshapes, thresholds, now)
             if (detected != null) {
                 lastGestureMs = now
                 _gestureFlow.tryEmit(detected)
             }
         }
 
+        private fun blendshapesOf(result: FaceLandmarkerResult): List<Category>? =
+            if (result.faceBlendshapes().isPresent) {
+                result.faceBlendshapes().get().getOrNull(0)
+            } else {
+                null
+            }
+
         private fun detectGesture(
             result: FaceLandmarkerResult,
+            blendshapes: List<Category>?,
             thresholds: CalibrationThresholds,
             now: Long,
         ): Gesture? {
@@ -131,7 +160,7 @@ class GestureProcessor
             return if (now - lastGestureMs < COOLDOWN_MS) {
                 null
             } else {
-                firstGesture(nod, state.gesture, result, thresholds)
+                firstGesture(nod, state.gesture, blendshapes, thresholds)
             }
         }
 
@@ -139,17 +168,11 @@ class GestureProcessor
         private fun firstGesture(
             nod: Boolean,
             directional: Gesture?,
-            result: FaceLandmarkerResult,
+            blendshapes: List<Category>?,
             thresholds: CalibrationThresholds,
         ): Gesture? {
             if (nod) return Gesture.NOD
             if (directional != null) return directional
-            val blendshapes =
-                if (result.faceBlendshapes().isPresent) {
-                    result.faceBlendshapes().get().getOrNull(0)
-                } else {
-                    null
-                }
             return GestureClassifier.classifyBlink(blendshapes, thresholds.blinkThreshold)
         }
 

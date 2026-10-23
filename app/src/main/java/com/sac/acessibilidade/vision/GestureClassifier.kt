@@ -43,14 +43,30 @@ object GestureClassifier {
         return classifyHeadPose(pose, thresholds)
     }
 
+    /**
+     * Maior score de piscada do quadro. Alimenta o [BlinkReliabilityMonitor],
+     * que acompanha a variação do sinal para saber se o olho está visível.
+     */
+    fun maxBlinkScore(blendshapes: List<Category>?): Float {
+        val (right, left) = blinkScores(blendshapes)
+        return maxOf(right, left)
+    }
+
+    /** Scores de piscada do quadro, na ordem (direito, esquerdo). */
+    private fun blinkScores(blendshapes: List<Category>?): Pair<Float, Float> {
+        blendshapes ?: return 0f to 0f
+        val right = blendshapes.firstOrNull { it.categoryName() == BLENDSHAPE_BLINK_RIGHT }?.score() ?: 0f
+        val left = blendshapes.firstOrNull { it.categoryName() == BLENDSHAPE_BLINK_LEFT }?.score() ?: 0f
+        return right to left
+    }
+
     /** Detecta piscadas isoladamente — instantâneo, sem baseline (usado pelo processador). */
     fun classifyBlink(
         blendshapes: List<Category>?,
         threshold: Float,
     ): Gesture? {
         blendshapes ?: return null
-        val right = blendshapes.firstOrNull { it.categoryName() == BLENDSHAPE_BLINK_RIGHT }?.score() ?: 0f
-        val left = blendshapes.firstOrNull { it.categoryName() == BLENDSHAPE_BLINK_LEFT }?.score() ?: 0f
+        val (right, left) = blinkScores(blendshapes)
         return when {
             right >= threshold -> Gesture.BLINK_RIGHT_EYE
             left >= threshold -> Gesture.BLINK_LEFT_EYE
