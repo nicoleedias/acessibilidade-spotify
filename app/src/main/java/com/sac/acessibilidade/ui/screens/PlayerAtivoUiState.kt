@@ -12,4 +12,10 @@ data class PlayerAtivoUiState(
     val lastGestureName: String = "",
     val lastGestureAction: String = "",
     val hasDetectedGesture: Boolean = false,
+    /**
+     * Nenhum gesto tem ação associada. O mapeamento começa vazio de propósito,
+     * então sem este aviso o usuário abriria o rastreamento, moveria a cabeça e
+     * nada aconteceria — sem explicação nenhuma.
+     */
+    val hasNoMapping: Boolean = false,
 )

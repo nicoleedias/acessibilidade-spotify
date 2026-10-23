@@ -186,6 +186,15 @@ fun PlayerAtivoScreen(
                         onVolumeDownClick = onVolumeDownClick,
                         onVolumeUpClick = onVolumeUpClick,
                     )
+                    if (uiState.hasNoMapping) {
+                        Text(
+                            text = stringResource(R.string.player_no_mapping),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SpotifyGreen,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     if (uiState.commandError != null) {
                         Text(
                             text = uiState.commandError,

@@ -48,7 +48,11 @@ class PlayerAtivoViewModel
         private fun observeMappings() {
             gestureMappingRepository
                 .observeMappings()
-                .onEach { mapping -> currentMapping = mapping }
+                .onEach { mapping ->
+                    currentMapping = mapping
+                    val semMapeamento = mapping.values.none { it != null }
+                    _uiState.update { it.copy(hasNoMapping = semMapeamento) }
+                }
                 .launchIn(viewModelScope)
         }
 

@@ -41,36 +41,35 @@ class GestureMappingRepositoryImplTest {
     // ── Defaults quando o banco está vazio ──────────────────────────────────
 
     @Test
-    fun `banco vazio devolve os mapeamentos padrao`() =
+    fun `primeiro uso entrega todos os gestos sem acao`() =
         runTest {
+            // Nenhum padrão de fábrica: associar gestos de antemão presumiria quais
+            // movimentos a pessoa consegue executar, que é o que este app não presume.
             every { dao.observeAll() } returns flowOf(emptyList())
 
             val mappings = repository.observeMappings().first()
 
-            assertEquals(SpotifyAction.VOLUME_UP, mappings[Gesture.TILT_HEAD_RIGHT])
-            assertEquals(SpotifyAction.VOLUME_DOWN, mappings[Gesture.TILT_HEAD_LEFT])
-            assertEquals(SpotifyAction.NEXT_TRACK, mappings[Gesture.TURN_FACE_RIGHT])
-            assertEquals(SpotifyAction.PREVIOUS_TRACK, mappings[Gesture.TURN_FACE_LEFT])
-            assertEquals(SpotifyAction.PLAY_PAUSE, mappings[Gesture.NOD])
+            assertTrue(
+                "Nenhum gesto deveria vir com ação: $mappings",
+                mappings.values.all { it == null },
+            )
         }
 
     @Test
-    fun `defaults cobrem os nove gestos deixando quatro sem acao`() =
+    fun `primeiro uso lista os nove gestos do vocabulario`() =
         runTest {
+            // A tela de configuração precisa de todos os gestos para oferecê-los,
+            // mesmo que nenhum tenha ação ainda.
             every { dao.observeAll() } returns flowOf(emptyList())
 
             val mappings = repository.observeMappings().first()
 
             assertEquals(9, mappings.size)
             assertEquals(Gesture.entries.toSet(), mappings.keys)
-            assertNull(mappings[Gesture.TILT_HEAD_UP])
-            assertNull(mappings[Gesture.TILT_HEAD_DOWN])
-            assertNull(mappings[Gesture.BLINK_RIGHT_EYE])
-            assertNull(mappings[Gesture.BLINK_LEFT_EYE])
         }
 
     @Test
-    fun `defaults usam cada acao no maximo uma vez`() =
+    fun `nenhuma acao aparece em dois gestos no estado inicial`() =
         runTest {
             every { dao.observeAll() } returns flowOf(emptyList())
 

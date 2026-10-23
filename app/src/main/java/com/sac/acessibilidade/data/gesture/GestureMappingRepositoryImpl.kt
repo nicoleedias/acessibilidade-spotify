@@ -44,16 +44,13 @@ class GestureMappingRepositoryImpl
             dao.upsertAll(entities)
         }
 
-        private fun defaultMappings(): Map<Gesture, SpotifyAction?> =
-            mapOf(
-                Gesture.TILT_HEAD_RIGHT to SpotifyAction.VOLUME_UP,
-                Gesture.TILT_HEAD_LEFT to SpotifyAction.VOLUME_DOWN,
-                Gesture.TILT_HEAD_UP to null,
-                Gesture.TILT_HEAD_DOWN to null,
-                Gesture.TURN_FACE_RIGHT to SpotifyAction.NEXT_TRACK,
-                Gesture.TURN_FACE_LEFT to SpotifyAction.PREVIOUS_TRACK,
-                Gesture.NOD to SpotifyAction.PLAY_PAUSE,
-                Gesture.BLINK_RIGHT_EYE to null,
-                Gesture.BLINK_LEFT_EYE to null,
-            )
+        /**
+         * Nenhum gesto vem associado de fábrica.
+         *
+         * Um padrão pronto parece conveniente, mas presume quais movimentos a
+         * pessoa consegue executar — exatamente o que este app não pode presumir.
+         * Começar vazio obriga a passar pela configuração uma vez e sair de lá com
+         * um mapeamento que funciona para ela.
+         */
+        private fun defaultMappings(): Map<Gesture, SpotifyAction?> = Gesture.entries.associateWith { null }
     }

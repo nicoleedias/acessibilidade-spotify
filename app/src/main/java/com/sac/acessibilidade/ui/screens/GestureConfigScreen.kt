@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,6 +66,7 @@ import com.sac.acessibilidade.ui.theme.NodifyTheme
 import com.sac.acessibilidade.ui.theme.SpotifyGreen
 import com.sac.acessibilidade.ui.theme.SurfaceDark
 import com.sac.acessibilidade.ui.theme.SurfaceVariantDark
+import com.sac.acessibilidade.ui.theme.TextDisabled
 import com.sac.acessibilidade.ui.theme.TextMuted
 import com.sac.acessibilidade.ui.theme.TextPrimary
 import com.sac.acessibilidade.ui.theme.TextSecondary
@@ -97,16 +99,39 @@ fun GestureConfigScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                Text(
-                    text = stringResource(R.string.gestures_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextMuted,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
+                Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                    Text(
+                        text = stringResource(R.string.gestures_subtitle),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextMuted,
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    // Com o mapeamento começando vazio, o usuário precisa enxergar
+                    // o quanto já fez — e o que fazer quando ainda não fez nada.
+                    if (uiState.hasNoMapping) {
+                        Text(
+                            text = stringResource(R.string.gesture_config_empty),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = SpotifyGreen,
+                        )
+                    } else {
+                        Text(
+                            text =
+                                stringResource(
+                                    R.string.gesture_config_progress,
+                                    uiState.assignedCount,
+                                    uiState.totalActions,
+                                ),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSecondary,
+                        )
+                    }
+                }
             }
             itemsIndexed(uiState.mappings) { _, mapping ->
                 GestureMappingCard(
                     mapping = mapping,
+                    blockedBy = { action -> uiState.blockedBy(mapping.gesture, action) },
                     onActionSelected = { action -> onMappingChanged(mapping.gesture, action) },
                 )
             }
@@ -183,6 +208,7 @@ private fun GestureConfigBottomBar(
 @Composable
 private fun GestureMappingCard(
     mapping: GestureMappingUi,
+    blockedBy: (String) -> String?,
     onActionSelected: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -262,43 +288,83 @@ private fun GestureMappingCard(
                             ),
                 ) {
                     availableActions.forEachIndexed { i, action ->
-                        val isSelected = action == mapping.selectedAction
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        onActionSelected(action)
-                                        expanded = false
-                                    }
-                                    .semantics {
-                                        contentDescription = action
-                                        role = Role.Button
-                                    }
-                                    .padding(horizontal = 20.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                text = action,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isSelected) SpotifyGreen else TextPrimary,
-                            )
-                            if (isSelected) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = SpotifyGreen,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                            }
-                        }
+                        ActionMenuItem(
+                            action = action,
+                            isSelected = action == mapping.selectedAction,
+                            blockedByGesture = blockedBy(action),
+                            onClick = {
+                                onActionSelected(action)
+                                expanded = false
+                            },
+                        )
                         if (i < availableActions.lastIndex) {
                             HorizontalDivider(color = SurfaceVariantDark.copy(alpha = 0.5f), thickness = 0.5.dp)
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Uma opção do seletor de ação.
+ *
+ * Quando a ação já pertence a outro gesto, o item continua na lista mas não
+ * responde ao toque e diz quem a ocupa. Removê-la seria pior: o usuário não
+ * saberia que a ação existe, nem onde ela foi parar.
+ */
+@Composable
+private fun ActionMenuItem(
+    action: String,
+    isSelected: Boolean,
+    blockedByGesture: String?,
+    onClick: () -> Unit,
+) {
+    val disponivel = blockedByGesture == null
+    val descricao =
+        if (disponivel) action else stringResource(R.string.gesture_config_in_use_by_a11y, action, blockedByGesture)
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(if (disponivel) Modifier.clickable(onClick = onClick) else Modifier)
+                .semantics {
+                    // O leitor de tela precisa anunciar o motivo, não apenas que o
+                    // item está ali: "por que não posso escolher este?"
+                    contentDescription = descricao
+                    role = Role.Button
+                    if (!disponivel) disabled()
+                }.padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = action,
+                style = MaterialTheme.typography.bodyMedium,
+                color =
+                    when {
+                        isSelected -> SpotifyGreen
+                        disponivel -> TextPrimary
+                        else -> TextDisabled
+                    },
+            )
+            if (!disponivel) {
+                Text(
+                    text = stringResource(R.string.gesture_config_in_use_by, blockedByGesture),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextDisabled,
+                )
+            }
+        }
+        if (isSelected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = SpotifyGreen,
+                modifier = Modifier.size(16.dp),
+            )
         }
     }
 }

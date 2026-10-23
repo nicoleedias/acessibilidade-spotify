@@ -214,6 +214,49 @@ class PlayerAtivoViewModelTest {
 
     // ── Gestos sem ação ─────────────────────────────────────────────────────
 
+    /**
+     * O mapeamento começa vazio de propósito. Sem este aviso o usuário abriria o
+     * rastreamento, moveria a cabeça e nada aconteceria, sem explicação nenhuma.
+     */
+    @Test
+    fun `nenhum gesto configurado sinaliza o aviso na tela`() =
+        runTest {
+            mappings.value = Gesture.entries.associateWith { null }
+
+            val vm = viewModel()
+            runCurrent()
+
+            assertTrue(vm.uiState.value.hasNoMapping)
+            vm.encerrar()
+        }
+
+    @Test
+    fun `um gesto configurado remove o aviso`() =
+        runTest {
+            mappings.value = Gesture.entries.associateWith { null } + (Gesture.NOD to SpotifyAction.PLAY_PAUSE)
+
+            val vm = viewModel()
+            runCurrent()
+
+            assertFalse(vm.uiState.value.hasNoMapping)
+            vm.encerrar()
+        }
+
+    @Test
+    fun `configurar um gesto durante o uso tira o aviso`() =
+        runTest {
+            mappings.value = Gesture.entries.associateWith { null }
+            val vm = viewModel()
+            runCurrent()
+            assertTrue(vm.uiState.value.hasNoMapping)
+
+            mappings.value = mappings.value + (Gesture.NOD to SpotifyAction.PLAY_PAUSE)
+            runCurrent()
+
+            assertFalse(vm.uiState.value.hasNoMapping)
+            vm.encerrar()
+        }
+
     @Test
     fun `gesto sem acao mapeada e ignorado`() =
         runTest {

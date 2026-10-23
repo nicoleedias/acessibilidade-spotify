@@ -130,14 +130,63 @@ class GestureConfigScreenTest {
         rolarAte(hasContentDescription(descricao))
         composeRule.onNodeWithContentDescription(descricao).performClick()
 
-        // Escolhe "Próxima Faixa" no menu aberto — o menu já está visível, não rola
+        // Escolhe uma ação LIVRE. "Próxima Faixa" não serve: no estado de teste ela
+        // já pertence a "Virar para Direita" e por isso aparece bloqueada.
         composeRule
-            .onNodeWithContentDescription(SpotifyAction.NEXT_TRACK.displayName())
+            .onNodeWithContentDescription(SpotifyAction.VOLUME_UP.displayName())
             .performClick()
 
         assertEquals(1, recebidos.size)
         assertEquals(Gesture.NOD, recebidos.first().first)
-        assertEquals(SpotifyAction.NEXT_TRACK.displayName(), recebidos.first().second)
+        assertEquals(SpotifyAction.VOLUME_UP.displayName(), recebidos.first().second)
+    }
+
+    // ── Exclusividade de ação (RN02) ────────────────────────────────────────
+
+    /**
+     * Ação já usada por outro gesto aparece no menu, mas desabilitada e dizendo
+     * quem a ocupa. Some da lista seria pior: o usuário não saberia que a ação
+     * existe nem onde foi parar.
+     */
+    @Test
+    fun acaoUsadaPorOutroGestoApareceBloqueadaComODono() {
+        montarTela()
+
+        val seletor = descricaoDoSeletor(Gesture.NOD, SpotifyAction.PLAY_PAUSE.displayName())
+        rolarAte(hasContentDescription(seletor))
+        composeRule.onNodeWithContentDescription(seletor).performClick()
+
+        val bloqueada =
+            "${SpotifyAction.NEXT_TRACK.displayName()}, já usada por ${Gesture.TURN_FACE_RIGHT.displayName()}"
+        composeRule.onNodeWithContentDescription(bloqueada).assertIsDisplayed()
+    }
+
+    @Test
+    fun tocarEmAcaoBloqueadaNaoAlteraOMapeamento() {
+        val recebidos = mutableListOf<Pair<Gesture, String>>()
+        montarTela(onMappingChanged = { g, a -> recebidos += g to a })
+
+        val seletor = descricaoDoSeletor(Gesture.NOD, SpotifyAction.PLAY_PAUSE.displayName())
+        rolarAte(hasContentDescription(seletor))
+        composeRule.onNodeWithContentDescription(seletor).performClick()
+
+        val bloqueada =
+            "${SpotifyAction.NEXT_TRACK.displayName()}, já usada por ${Gesture.TURN_FACE_RIGHT.displayName()}"
+        composeRule.onNodeWithContentDescription(bloqueada).performClick()
+
+        assertTrue("Ação bloqueada não deveria alterar nada: $recebidos", recebidos.isEmpty())
+    }
+
+    /** Desligar um gesto precisa estar sempre ao alcance, nunca bloqueado. */
+    @Test
+    fun semAcaoNuncaApareceBloqueada() {
+        montarTela()
+
+        val seletor = descricaoDoSeletor(Gesture.NOD, SpotifyAction.PLAY_PAUSE.displayName())
+        rolarAte(hasContentDescription(seletor))
+        composeRule.onNodeWithContentDescription(seletor).performClick()
+
+        composeRule.onNodeWithContentDescription(NO_ACTION_LABEL).assertIsDisplayed()
     }
 
     @Test

@@ -85,6 +85,13 @@
     <string name="capture_face_too_far">Você está longe. Aproxime-se da câmera.</string>
     <string name="capture_face_too_close">Você está muito perto. Afaste-se um pouco.</string>
 
+    <!-- Configuracao de gestos -->
+    <string name="gesture_config_in_use_by">Já usada por %1$s</string>
+    <string name="gesture_config_in_use_by_a11y">%1$s, já usada por %2$s</string>
+    <string name="gesture_config_progress">%1$d de %2$d ações atribuídas</string>
+    <string name="gesture_config_empty">Nenhum gesto configurado ainda. Escolha uma ação para cada movimento que você consegue fazer.</string>
+    <string name="player_no_mapping">Nenhum gesto configurado. Vá em Configurar Gestos para escolher o que cada movimento faz.</string>
+
     <string name="home_action_library">Sua Biblioteca</string>
     <string name="home_action_library_desc">Escolher playlist e música</string>
 
