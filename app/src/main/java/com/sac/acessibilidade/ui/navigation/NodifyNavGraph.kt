@@ -20,6 +20,8 @@ import com.sac.acessibilidade.ui.screens.GestureConfigScreen
 import com.sac.acessibilidade.ui.screens.GestureConfigViewModel
 import com.sac.acessibilidade.ui.screens.HomeScreen
 import com.sac.acessibilidade.ui.screens.HomeViewModel
+import com.sac.acessibilidade.ui.screens.LibraryScreen
+import com.sac.acessibilidade.ui.screens.LibraryViewModel
 import com.sac.acessibilidade.ui.screens.LoginScreen
 import com.sac.acessibilidade.ui.screens.LoginUiState
 import com.sac.acessibilidade.ui.screens.LoginViewModel
@@ -87,6 +89,9 @@ fun NodifyNavHost(
                 onConfigureGesturesClick = {
                     navController.navigate(Screen.GestureConfig.route)
                 },
+                onLibraryClick = {
+                    navController.navigate(Screen.Library.route)
+                },
             )
         }
 
@@ -112,6 +117,20 @@ fun NodifyNavHost(
                 onSaveClick = { viewModel.save { navController.popBackStack() } },
                 onRestoreDefaults = viewModel::restoreDefaults,
                 onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Screen.Library.route) {
+            val viewModel: LibraryViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            LibraryScreen(
+                uiState = uiState,
+                onPrevious = viewModel::focusPrevious,
+                onNext = viewModel::focusNext,
+                onSelect = viewModel::select,
+                // Dentro de uma playlist, voltar sobe um nível; na raiz, sai da tela.
+                onBack = { if (!viewModel.back()) navController.popBackStack() },
+                onRetry = viewModel::retry,
             )
         }
 

@@ -84,4 +84,22 @@
     <string name="capture_multiple_faces">Mais de um rosto na câmera. Só você deve aparecer.</string>
     <string name="capture_face_too_far">Você está longe. Aproxime-se da câmera.</string>
     <string name="capture_face_too_close">Você está muito perto. Afaste-se um pouco.</string>
+
+    <string name="home_action_library">Sua Biblioteca</string>
+    <string name="home_action_library_desc">Escolher playlist e música</string>
+
+    <!-- Biblioteca -->
+    <string name="library_title">Sua Biblioteca</string>
+    <string name="library_back">Voltar</string>
+    <string name="library_loading">Carregando…</string>
+    <string name="library_empty">Nenhuma playlist encontrada nesta conta.</string>
+    <string name="library_retry">Tentar de novo</string>
+    <string name="library_previous">Item anterior</string>
+    <string name="library_next">Próximo item</string>
+    <string name="library_open">Abrir playlist</string>
+    <string name="library_play">Tocar</string>
+    <string name="library_hint_playlists">Vire o rosto para navegar · Aceno para abrir</string>
+    <string name="library_hint_tracks">Vire o rosto para navegar · Aceno para tocar · Incline para baixo para voltar</string>
+    <string name="library_blink_blocked">A piscada não está sendo reconhecida. Se estiver de óculos escuros, use os outros gestos.</string>
+    <string name="library_cover">Capa</string>
 </resources>

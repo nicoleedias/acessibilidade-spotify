@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +56,7 @@ fun HomeScreen(
     onStartTrackingClick: () -> Unit = {},
     onCalibrateClick: () -> Unit = {},
     onConfigureGesturesClick: () -> Unit = {},
+    onLibraryClick: () -> Unit = {},
 ) {
     val userName = uiState.userName ?: "Usuário"
     Column(
@@ -111,6 +113,15 @@ fun HomeScreen(
             iconTint = Color(0xFF2B7FFF),
             iconBackground = Color(0xFF2B7FFF).copy(alpha = 0.10f),
             onClick = onCalibrateClick,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        HomeActionCard(
+            title = stringResource(R.string.home_action_library),
+            subtitle = stringResource(R.string.home_action_library_desc),
+            icon = Icons.Default.QueueMusic,
+            iconTint = SpotifyGreen,
+            iconBackground = SpotifyGreen.copy(alpha = 0.10f),
+            onClick = onLibraryClick,
         )
         Spacer(modifier = Modifier.height(12.dp))
         HomeActionCard(

@@ -10,4 +10,6 @@ sealed class Screen(val route: String) {
     data object GestureConfig : Screen("gesture_config")
 
     data object PlayerAtivo : Screen("player_ativo")
+
+    data object Library : Screen("library")
 }
