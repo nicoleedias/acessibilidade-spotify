@@ -1,6 +1,6 @@
 # Guia rápido de setup (máquina nova)
 
-Checklist para rodar o **Nodify** num desktop/telefone novo. Para detalhes, ver o [README](README.md).
+Checklist resumido para quem já conhece o projeto. **Primeira vez? Siga o [Guia de Instalação passo a passo no README](README.md#guia-de-instalação-passo-a-passo-para-testar).**
 
 > O `local.properties` (com o Client ID) **não vem no `git clone`** — é ignorado pelo Git por segurança. Você o recria pelo template.
 
