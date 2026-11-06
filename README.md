@@ -42,7 +42,34 @@ Projeto estruturado em camadas (MVVM) para isolar responsabilidades:
 
 ---
 
-## Guia de Instalação (passo a passo para testar)
+## Como instalar
+
+Escolha **uma** das duas opções:
+
+| | Opção A — Instalar o APK | Opção B — Rodar pelo código |
+| - | ------------------------ | --------------------------- |
+| Para quem | Quem só quer **testar** o app | Quem quer **mexer no código** |
+| Precisa de | Só um celular Android | Computador + Android Studio + app próprio no Spotify |
+| Tempo | ~5 min | 30–40 min |
+
+## Opção A — Instalar o APK (só testar)
+
+> **Antes de tudo:** o app está em *modo de desenvolvimento* no Spotify, então **só consegue logar quem foi cadastrado pelo dono do app**. Mande o **e-mail da sua conta Spotify** para o Pedro e espere ele confirmar que cadastrou. Sem isso o login falha.
+
+1. **Baixe o APK** que o Pedro enviou (`Nodify-debug.apk`) direto no celular.
+2. Toque no arquivo para instalar. O Android vai pedir para permitir **"Instalar apps desconhecidos"** para o app que você usou para abrir o arquivo (Drive, Chrome, WhatsApp…) — permita.
+3. Se aparecer o aviso do **Play Protect** ("app não verificado"), toque em **Instalar mesmo assim**. É esperado: o APK é de teste e não vem da Play Store.
+4. Instale e entre no **app do Spotify** no mesmo celular e **dê play em uma música** (a Web API só controla um dispositivo com sessão ativa).
+5. Abra o **Nodify**, conceda a permissão de **câmera** e faça o [Primeiro uso](#passo-9--primeiro-uso): login → calibração → configurar gestos → player.
+
+**Requisitos do celular:** Android 10+, câmera frontal, processador de 64 bits (arm64) — praticamente todo celular lançado nos últimos anos.
+
+Problemas? Veja a [Solução de problemas](#solução-de-problemas).
+
+---
+
+## Opção B — Rodar pelo código (Android Studio)
+
 
 > **Tempo estimado:** 30–40 min na primeira vez (a maior parte é download do Android Studio e do Gradle).
 > Siga **na ordem**. Se algo falhar, veja [Solução de problemas](#solução-de-problemas).
