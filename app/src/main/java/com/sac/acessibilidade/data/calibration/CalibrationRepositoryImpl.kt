@@ -29,7 +29,10 @@ class CalibrationRepositoryImpl
                 .putFloat(KEY_PITCH_SIGN, thresholds.pitchSign)
                 .putFloat(KEY_YAW_SIGN, thresholds.yawSign)
                 .putBoolean(KEY_IS_CALIBRATED, true)
-                .apply()
+                .also { editor ->
+                    val upSign = thresholds.pitchUpSign
+                    if (upSign != null) editor.putFloat(KEY_PITCH_UP_SIGN, upSign) else editor.remove(KEY_PITCH_UP_SIGN)
+                }.apply()
         }
 
         override fun saveDefaultThresholds() = saveThresholds(CalibrationThresholds())
@@ -49,6 +52,7 @@ class CalibrationRepositoryImpl
                 rollSign = prefs.getFloat(KEY_ROLL_SIGN, DEFAULT_SIGN),
                 pitchSign = prefs.getFloat(KEY_PITCH_SIGN, DEFAULT_SIGN),
                 yawSign = prefs.getFloat(KEY_YAW_SIGN, DEFAULT_SIGN),
+                pitchUpSign = if (prefs.contains(KEY_PITCH_UP_SIGN)) prefs.getFloat(KEY_PITCH_UP_SIGN, 0f) else null,
             )
 
         private companion object {
@@ -63,6 +67,7 @@ class CalibrationRepositoryImpl
             const val KEY_ROLL_SIGN = "roll_sign"
             const val KEY_PITCH_SIGN = "pitch_sign"
             const val KEY_YAW_SIGN = "yaw_sign"
+            const val KEY_PITCH_UP_SIGN = "pitch_up_sign"
             const val KEY_IS_CALIBRATED = "is_calibrated"
             const val DEFAULT_ROLL_DEG = 15f
             const val DEFAULT_PITCH_DEG = 12f

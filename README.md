@@ -180,7 +180,8 @@ Se preferir usar o app de outra pessoa, o dono precisa ir em *Settings → User 
 | Login do Spotify: *User not registered in the Developer Dashboard* | Conta não autorizada no app | Use o seu próprio app (Passo 3) ou peça ao dono para cadastrar seu e-mail |
 | Login falha de imediato / Client ID vazio | `local.properties` ausente ou sem as chaves | Refaça o Passo 4 e rode **Build → Rebuild Project** |
 | Comandos sem efeito ("sem dispositivo ativo") | Spotify fechado ou parado | Passo 8: dê play no Spotify |
-| Erro 403 nos comandos de reprodução | Conta gratuita | Limitação do Spotify (exige Premium) |
+| Erro ao mudar o **volume** | O Spotify não deixa o celular ter o volume ajustado pela API | Use os botões de volume do aparelho; os demais comandos (play/pause, próxima, anterior) continuam funcionando |
+| Erro 403 em outros comandos | Conta gratuita, ou restrição do modo de desenvolvimento | A mensagem na tela agora traz o motivo informado pelo Spotify; confirme que a conta é Premium e está cadastrada no User Management |
 | Gestos disparam sozinhos ou não disparam | Pouca luz, rosto cortado, calibração antiga | Melhore a luz, enquadre o rosto, recalibre |
 | `face_landmarker.task` não foi baixado | Sem internet durante o sync | Baixe de <https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task> e coloque em `app/src/main/assets/` |
 | Sync lento ou travado | Primeira execução baixa muita coisa | Aguarde; se travar, **File → Invalidate Caches → Invalidate and Restart** |

@@ -55,7 +55,7 @@ class SpotifyLibraryRepositoryImpl
                     val response = api.play(contextBody(contextUri, startIndex))
                     when (response.code()) {
                         NO_CONTENT -> Unit
-                        FORBIDDEN -> throw IOException(PREMIUM_REQUIRED)
+                        FORBIDDEN -> throw IOException(SpotifyForbidden.messageFor(response.errorBody()?.string()))
                         NOT_FOUND -> throw IOException(NO_ACTIVE_DEVICE)
                         else -> if (!response.isSuccessful) throw IOException("HTTP ${response.code()}")
                     }
@@ -77,7 +77,7 @@ class SpotifyLibraryRepositoryImpl
 
         private fun messageFor(code: Int): String =
             when (code) {
-                FORBIDDEN -> PREMIUM_REQUIRED
+                FORBIDDEN -> SpotifyForbidden.PREMIUM_REQUIRED
                 NOT_FOUND -> NO_ACTIVE_DEVICE
                 UNAUTHORIZED -> "Sessão expirada. Entre no Spotify novamente."
                 else -> "HTTP $code"
@@ -89,7 +89,6 @@ class SpotifyLibraryRepositoryImpl
             const val UNAUTHORIZED = 401
             const val FORBIDDEN = 403
             const val NOT_FOUND = 404
-            const val PREMIUM_REQUIRED = "Spotify Premium necessário para controle de reprodução"
             const val NO_ACTIVE_DEVICE = "Nenhum dispositivo ativo. Abra o Spotify no celular primeiro."
         }
     }

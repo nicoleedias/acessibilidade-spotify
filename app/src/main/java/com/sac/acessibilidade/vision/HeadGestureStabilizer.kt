@@ -165,7 +165,7 @@ class HeadGestureStabilizer(
         )
 
     companion object {
-        private const val DEFAULT_SUSTAIN_FRAMES = 2
+        private const val DEFAULT_SUSTAIN_FRAMES = 5
         private const val DEFAULT_BASELINE_FRAMES = 10
         private const val DEFAULT_STABLE_RANGE_DEG = 6f
         private const val DEFAULT_RELEASE_RATIO = 0.5f

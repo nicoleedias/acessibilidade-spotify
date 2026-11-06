@@ -16,6 +16,12 @@ object GestureClassifier {
     private const val BLENDSHAPE_BLINK_RIGHT = "eyeBlinkRight"
     private const val BLENDSHAPE_BLINK_LEFT = "eyeBlinkLeft"
 
+    /**
+     * O eixo vencedor precisa superar o segundo colocado por este fator. Abaixo
+     * disso o movimento é diagonal demais para ser um gesto deliberado.
+     */
+    private const val DOMINANCE_MARGIN = 1.3f
+
     fun classify(
         landmarks: List<NormalizedLandmark>,
         blendshapes: List<Category>?,
@@ -82,16 +88,29 @@ object GestureClassifier {
         // não é assumida pelo código, é a que o usuário de fato produziu quando
         // a calibração pediu "direita"/"baixo". Imune a espelhamento de câmera.
         val roll = pose.roll * t.rollSign
-        val pitch = pose.pitch * t.pitchSign
+        val pitchDown = pose.pitch * t.pitchSign
+        val pitchUp = pose.pitch * t.effectivePitchUpSign
         val yaw = pose.yaw * t.yawSign
+        // Cada direção vira uma razão "quanto do limiar foi atingido". Em vez de uma
+        // ordem fixa de prioridade (roll antes de pitch antes de yaw), vence o eixo
+        // que mais se destaca — e movimento diagonal ambíguo não dispara nada.
+        // Movimentos naturais (olhar ao redor, ajeitar a postura) quase sempre
+        // misturam eixos; um gesto intencional é dominado por um só.
+        val ranked =
+            listOf(
+                Gesture.TILT_HEAD_RIGHT to roll / t.rollRightDeg,
+                Gesture.TILT_HEAD_LEFT to -roll / t.rollLeftDeg,
+                Gesture.TILT_HEAD_UP to pitchUp / t.pitchUpDeg,
+                Gesture.TILT_HEAD_DOWN to pitchDown / t.pitchDownDeg,
+                Gesture.TURN_FACE_RIGHT to yaw / t.yawRightDeg,
+                Gesture.TURN_FACE_LEFT to -yaw / t.yawLeftDeg,
+            ).sortedByDescending { it.second }
+        val (best, bestRatio) = ranked[0]
+        val runnerUpRatio = ranked[1].second
         return when {
-            roll > t.rollRightDeg -> Gesture.TILT_HEAD_RIGHT
-            roll < -t.rollLeftDeg -> Gesture.TILT_HEAD_LEFT
-            pitch < -t.pitchUpDeg -> Gesture.TILT_HEAD_UP
-            pitch > t.pitchDownDeg -> Gesture.TILT_HEAD_DOWN
-            yaw > t.yawRightDeg -> Gesture.TURN_FACE_RIGHT
-            yaw < -t.yawLeftDeg -> Gesture.TURN_FACE_LEFT
-            else -> null
+            bestRatio <= 1f -> null
+            runnerUpRatio * DOMINANCE_MARGIN > bestRatio -> null
+            else -> best
         }
     }
 }

@@ -25,4 +25,15 @@ data class CalibrationThresholds(
     val rollSign: Float = 1f,
     val pitchSign: Float = 1f,
     val yawSign: Float = 1f,
-)
+    /**
+     * Sinal que o pitch realmente teve quando o usuário olhou "para cima" na
+     * calibração. `null` = assume o oposto de [pitchSign] (movimento simétrico).
+     * A estimativa 2D de pitch é assimétrica: levantar o queixo move o nariz pouco
+     * e pode até produzir o mesmo sinal de abaixar. Usar o sinal observado evita
+     * que "cima" fique indetectável nesses casos.
+     */
+    val pitchUpSign: Float? = null,
+) {
+    /** Multiplicador do pitch bruto que o torna positivo quando o usuário olha para cima. */
+    val effectivePitchUpSign: Float get() = pitchUpSign ?: -pitchSign
+}

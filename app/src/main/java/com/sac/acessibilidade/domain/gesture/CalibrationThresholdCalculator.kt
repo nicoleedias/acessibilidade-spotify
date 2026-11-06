@@ -51,6 +51,9 @@ object CalibrationThresholdCalculator {
             rollSign = signOf(peaks.tiltRight),
             pitchSign = signOf(peaks.tiltDown),
             yawSign = signOf(peaks.turnRight),
+            // "Cima" usa o sinal observado quando o movimento foi de fato medido; com
+            // pico abaixo do piso seria ruído e vale a simetria com "baixo".
+            pitchUpSign = if (abs(peaks.tiltUp) >= MIN_PITCH_DEG) signOf(peaks.tiltUp) else null,
         )
     }
 

@@ -34,7 +34,7 @@ class SpotifyCommandRepositoryImpl
                     val response = block()
                     when (response.code()) {
                         204 -> Unit
-                        403 -> throw IOException("Spotify Premium necessário para controle de reprodução")
+                        403 -> throw IOException(SpotifyForbidden.messageFor(response.errorBody()?.string()))
                         404 -> throw IOException("Nenhum dispositivo ativo. Abra o Spotify no celular primeiro.")
                         else -> if (!response.isSuccessful) throw IOException("HTTP ${response.code()}")
                     }
