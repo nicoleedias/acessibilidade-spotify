@@ -12,6 +12,7 @@ import com.sac.acessibilidade.spotify.player.SpotifyLibraryRepositoryImpl
 import com.sac.acessibilidade.spotify.player.SpotifyPlayerApi
 import com.sac.acessibilidade.spotify.player.SpotifyPlayerRepository
 import com.sac.acessibilidade.spotify.player.SpotifyPlayerRepositoryImpl
+import com.sac.acessibilidade.spotify.spotifyJson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -98,6 +99,6 @@ abstract class SpotifyModule {
 
         @Provides
         @Singleton
-        fun provideJson(): Json = Json { ignoreUnknownKeys = true }
+        fun provideJson(): Json = spotifyJson
     }
 }
