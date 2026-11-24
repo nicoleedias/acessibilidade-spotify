@@ -90,6 +90,10 @@ fun LibraryScreen(
         )
 
         if (!uiState.blinkReliable) BlinkBlockedWarning()
+        if (uiState.missingActions.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            MissingGesturesWarning(uiState.missingActionsLabel)
+        }
 
         Box(
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -377,6 +381,26 @@ private fun BlinkBlockedWarning() {
     ) {
         Text(
             text = stringResource(R.string.library_blink_blocked),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+        )
+    }
+}
+
+/** Avisa quais ações da biblioteca ainda não têm gesto; os botões da tela seguem funcionando. */
+@Composable
+private fun MissingGesturesWarning(actionsLabel: String) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(SurfaceDark)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .semantics(mergeDescendants = true) {},
+    ) {
+        Text(
+            text = stringResource(R.string.library_missing_gestures, actionsLabel),
             style = MaterialTheme.typography.labelSmall,
             color = TextSecondary,
         )

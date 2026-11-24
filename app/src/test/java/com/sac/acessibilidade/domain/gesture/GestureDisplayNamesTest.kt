@@ -55,8 +55,8 @@ class GestureDisplayNamesTest {
     }
 
     @Test
-    fun `todas as cinco acoes possuem rotulo nao vazio`() {
-        assertEquals(5, SpotifyAction.entries.size)
+    fun `todas as seis acoes possuem rotulo nao vazio`() {
+        assertEquals(6, SpotifyAction.entries.size)
         SpotifyAction.entries.forEach { action ->
             assertTrue(
                 "Ação ${action.name} está sem rótulo",

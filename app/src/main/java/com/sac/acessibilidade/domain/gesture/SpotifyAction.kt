@@ -6,4 +6,5 @@ enum class SpotifyAction {
     PREVIOUS_TRACK,
     VOLUME_UP,
     VOLUME_DOWN,
+    BACK,
 }

@@ -105,8 +105,9 @@
     <string name="library_next">Próximo item</string>
     <string name="library_open">Abrir playlist</string>
     <string name="library_play">Tocar</string>
-    <string name="library_hint_playlists">Vire o rosto para navegar · Aceno para abrir</string>
-    <string name="library_hint_tracks">Vire o rosto para navegar · Aceno para tocar · Incline para baixo para voltar</string>
+    <string name="library_hint_playlists">Use seus gestos: próxima/anterior para navegar · tocar/pausar para abrir</string>
+    <string name="library_hint_tracks">Use seus gestos: próxima/anterior para navegar · tocar/pausar para tocar · voltar para sair da playlist</string>
     <string name="library_blink_blocked">A piscada não está sendo reconhecida. Se estiver de óculos escuros, use os outros gestos.</string>
+    <string name="library_missing_gestures">Sem gesto para: %1$s. Vá em Configurar Gestos para escolher; até lá, use os botões da tela.</string>
     <string name="library_cover">Capa</string>
 </resources>

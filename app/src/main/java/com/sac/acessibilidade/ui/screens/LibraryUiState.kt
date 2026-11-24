@@ -1,5 +1,7 @@
 package com.sac.acessibilidade.ui.screens
 
+import com.sac.acessibilidade.domain.gesture.SpotifyAction
+import com.sac.acessibilidade.domain.gesture.displayName
 import com.sac.acessibilidade.spotify.player.model.PlaylistItem
 import com.sac.acessibilidade.spotify.player.model.PlaylistTrack
 
@@ -25,7 +27,15 @@ data class LibraryUiState(
     val errorMessage: String? = null,
     /** Falso quando a piscada está bloqueada por oclusão (ver BlinkReliabilityMonitor). */
     val blinkReliable: Boolean = true,
+    /**
+     * Ações usadas na biblioteca que ainda não têm gesto. Vazio até o mapeamento
+     * carregar, para o aviso não piscar na abertura da tela.
+     */
+    val missingActions: List<SpotifyAction> = emptyList(),
 ) {
+    /** Rótulos das ações sem gesto, ex.: "Próxima Faixa, Voltar". */
+    val missingActionsLabel: String get() = missingActions.joinToString(", ") { it.displayName() }
+
     val itemCount: Int
         get() = if (level == LibraryLevel.PLAYLISTS) playlists.size else tracks.size
 
