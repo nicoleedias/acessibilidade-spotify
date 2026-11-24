@@ -20,6 +20,7 @@ fun SpotifyAction.displayName(): String =
         SpotifyAction.PREVIOUS_TRACK -> "Faixa Anterior"
         SpotifyAction.VOLUME_UP -> "Aumentar Volume"
         SpotifyAction.VOLUME_DOWN -> "Diminuir Volume"
+        SpotifyAction.BACK -> "Voltar"
     }
 
 fun String.toSpotifyActionOrNull(): SpotifyAction? = SpotifyAction.entries.firstOrNull { it.displayName() == this }

@@ -62,6 +62,7 @@ class PlayerAtivoViewModel
             viewModelScope.launch {
                 gestureProcessor.gestureFlow.collect { gesture ->
                     val action = currentMapping[gesture] ?: return@collect
+                    if (action == SpotifyAction.BACK) return@collect // "Voltar" só existe na biblioteca
                     showGestureFeedback(gesture, action)
                     executeAction(action)
                 }
@@ -92,6 +93,7 @@ class PlayerAtivoViewModel
                 SpotifyAction.PREVIOUS_TRACK -> skipToPrevious()
                 SpotifyAction.VOLUME_UP -> volumeUp()
                 SpotifyAction.VOLUME_DOWN -> volumeDown()
+                SpotifyAction.BACK -> Unit
             }
         }
 
