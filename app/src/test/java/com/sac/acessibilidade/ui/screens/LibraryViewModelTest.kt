@@ -1,6 +1,8 @@
 package com.sac.acessibilidade.ui.screens
 
 import com.sac.acessibilidade.domain.gesture.Gesture
+import com.sac.acessibilidade.domain.gesture.GestureMappingRepository
+import com.sac.acessibilidade.domain.gesture.SpotifyAction
 import com.sac.acessibilidade.spotify.player.SpotifyLibraryRepository
 import com.sac.acessibilidade.spotify.player.model.PlaylistItem
 import com.sac.acessibilidade.spotify.player.model.PlaylistTrack
@@ -14,6 +16,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -36,6 +39,7 @@ class LibraryViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var repository: SpotifyLibraryRepository
+    private lateinit var mappingRepository: GestureMappingRepository
     private lateinit var gestureProcessor: GestureProcessor
     private lateinit var gestures: MutableSharedFlow<Gesture>
     private lateinit var blinkReliable: MutableStateFlow<Boolean>
@@ -67,13 +71,24 @@ class LibraryViewModelTest {
         every { gestureProcessor.gestureFlow } returns gestures
         every { gestureProcessor.blinkReliable } returns blinkReliable
 
+        mappingRepository = mockk(relaxed = true)
+        every { mappingRepository.observeMappings() } returns
+            flowOf(
+                mapOf(
+                    Gesture.TURN_FACE_RIGHT to SpotifyAction.NEXT_TRACK,
+                    Gesture.TURN_FACE_LEFT to SpotifyAction.PREVIOUS_TRACK,
+                    Gesture.NOD to SpotifyAction.PLAY_PAUSE,
+                    Gesture.TILT_HEAD_DOWN to SpotifyAction.BACK,
+                ),
+            )
+
         repository = mockk(relaxed = true)
         coEvery { repository.getPlaylists() } returns Result.success(tresPlaylists)
         coEvery { repository.getPlaylistTracks(any()) } returns Result.success(duasFaixas)
         coEvery { repository.playFromContext(any(), any()) } returns Result.success(Unit)
     }
 
-    private fun viewModel() = LibraryViewModel(repository, gestureProcessor)
+    private fun viewModel() = LibraryViewModel(repository, mappingRepository, gestureProcessor)
 
     // ── Carga inicial ────────────────────────────────────────────────────
 
@@ -357,6 +372,62 @@ class LibraryViewModelTest {
             runCurrent()
 
             assertEquals(LibraryLevel.PLAYLISTS, vm.uiState.value.level)
+        }
+
+    /** A navegação segue o mapeamento do usuário, não gestos fixos. */
+    @Test
+    fun `navegacao segue o mapeamento personalizado`() =
+        runTest {
+            every { mappingRepository.observeMappings() } returns
+                flowOf(
+                    mapOf(
+                        Gesture.BLINK_RIGHT_EYE to SpotifyAction.NEXT_TRACK,
+                        Gesture.TILT_HEAD_UP to SpotifyAction.PLAY_PAUSE,
+                        Gesture.BLINK_LEFT_EYE to SpotifyAction.BACK,
+                    ),
+                )
+            val vm = viewModel()
+            runCurrent()
+
+            gestures.emit(Gesture.BLINK_RIGHT_EYE)
+            runCurrent()
+            assertEquals("Treino", vm.uiState.value.focusedTitle)
+
+            gestures.emit(Gesture.TURN_FACE_RIGHT) // sem ação no mapeamento: ignorado
+            runCurrent()
+            assertEquals("Treino", vm.uiState.value.focusedTitle)
+
+            gestures.emit(Gesture.TILT_HEAD_UP)
+            runCurrent()
+            assertEquals(LibraryLevel.TRACKS, vm.uiState.value.level)
+
+            gestures.emit(Gesture.BLINK_LEFT_EYE)
+            runCurrent()
+            assertEquals(LibraryLevel.PLAYLISTS, vm.uiState.value.level)
+        }
+
+    @Test
+    fun `sem gesto para as acoes da biblioteca o estado lista o que falta`() =
+        runTest {
+            every { mappingRepository.observeMappings() } returns
+                flowOf(mapOf(Gesture.NOD to SpotifyAction.PLAY_PAUSE, Gesture.TILT_HEAD_UP to SpotifyAction.VOLUME_UP))
+            val vm = viewModel()
+            runCurrent()
+
+            assertEquals(
+                listOf(SpotifyAction.NEXT_TRACK, SpotifyAction.PREVIOUS_TRACK, SpotifyAction.BACK),
+                vm.uiState.value.missingActions,
+            )
+            assertEquals("Próxima Faixa, Faixa Anterior, Voltar", vm.uiState.value.missingActionsLabel)
+        }
+
+    @Test
+    fun `com todas as acoes mapeadas nao ha aviso`() =
+        runTest {
+            val vm = viewModel()
+            runCurrent()
+
+            assertTrue(vm.uiState.value.missingActions.isEmpty())
         }
 
     /** Gestos fora do vocabulário desta tela não podem ter efeito colateral. */

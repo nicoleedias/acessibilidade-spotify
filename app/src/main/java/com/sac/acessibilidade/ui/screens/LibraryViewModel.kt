@@ -3,6 +3,8 @@ package com.sac.acessibilidade.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sac.acessibilidade.domain.gesture.Gesture
+import com.sac.acessibilidade.domain.gesture.GestureMappingRepository
+import com.sac.acessibilidade.domain.gesture.SpotifyAction
 import com.sac.acessibilidade.spotify.player.SpotifyLibraryRepository
 import com.sac.acessibilidade.spotify.player.model.PlaylistItem
 import com.sac.acessibilidade.vision.GestureProcessor
@@ -17,34 +19,33 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Navegação da biblioteca por gestos da cabeça.
+ * Navegação da biblioteca por gestos, usando o mesmo mapeamento da tela de
+ * configuração: o usuário aprende um conjunto de gestos só.
  *
- * Aqui os gestos têm significado fixo de navegação, e não o mapeamento que o
- * usuário escolheu para controlar a reprodução: nesta tela ele não está tocando
- * música, está escolhendo o que tocar. São os mesmos movimentos que ele já
- * calibrou, então nada precisa ser recalibrado.
- *
- * - virar o rosto para a direita: próximo item
- * - virar o rosto para a esquerda: item anterior
- * - aceno: abre a playlist, ou toca a faixa
- * - inclinar a cabeça para baixo: volta um nível
+ * - "Próxima Faixa": próximo item (playlist ou faixa)
+ * - "Faixa Anterior": item anterior
+ * - "Tocar / Pausar": abre a playlist em foco, ou toca a faixa em foco
+ * - "Voltar": volta um nível
  */
 @HiltViewModel
 class LibraryViewModel
     @Inject
     constructor(
         private val libraryRepository: SpotifyLibraryRepository,
+        private val gestureMappingRepository: GestureMappingRepository,
         val gestureProcessor: GestureProcessor,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(LibraryUiState())
         val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
         private var openPlaylist: PlaylistItem? = null
+        private var currentMapping: Map<Gesture, SpotifyAction?> = emptyMap()
 
         init {
             gestureProcessor.initialize()
             gestureProcessor.resetBaseline()
             loadPlaylists()
+            observeMappings()
             collectGestures()
             observeBlinkReliability()
         }
@@ -70,14 +71,26 @@ class LibraryViewModel
 
         // ── Gestos ───────────────────────────────────────────────────────────
 
+        private fun observeMappings() {
+            gestureMappingRepository
+                .observeMappings()
+                .onEach { mapping ->
+                    currentMapping = mapping
+                    val atribuidas = mapping.values.toSet()
+                    val faltando = ACOES_DA_BIBLIOTECA.filterNot { it in atribuidas }
+                    _uiState.update { it.copy(missingActions = faltando) }
+                }
+                .launchIn(viewModelScope)
+        }
+
         private fun collectGestures() {
             gestureProcessor.gestureFlow
                 .onEach { gesture ->
-                    when (gesture) {
-                        Gesture.TURN_FACE_RIGHT -> focusNext()
-                        Gesture.TURN_FACE_LEFT -> focusPrevious()
-                        Gesture.NOD -> select()
-                        Gesture.TILT_HEAD_DOWN -> back()
+                    when (currentMapping[gesture]) {
+                        SpotifyAction.NEXT_TRACK -> focusNext()
+                        SpotifyAction.PREVIOUS_TRACK -> focusPrevious()
+                        SpotifyAction.PLAY_PAUSE -> select()
+                        SpotifyAction.BACK -> back()
                         else -> Unit
                     }
                 }.launchIn(viewModelScope)
@@ -194,6 +207,15 @@ class LibraryViewModel
         }
 
         private companion object {
+            /** Ações que a navegação da biblioteca usa; sem gesto, só os botões da tela as alcançam. */
+            val ACOES_DA_BIBLIOTECA =
+                listOf(
+                    SpotifyAction.NEXT_TRACK,
+                    SpotifyAction.PREVIOUS_TRACK,
+                    SpotifyAction.PLAY_PAUSE,
+                    SpotifyAction.BACK,
+                )
+
             const val ERRO_PADRAO = "Não foi possível carregar sua biblioteca."
         }
     }
